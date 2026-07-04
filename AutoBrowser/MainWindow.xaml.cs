@@ -1,10 +1,12 @@
 ﻿using System.Windows;
 using AutoBrowser.Services;
 using AutoBrowser.ViewModels;
+using Wpf.Ui.Appearance;
+using Wpf.Ui.Controls;
 
 namespace AutoBrowser;
 
-public partial class MainWindow : System.Windows.Window
+public partial class MainWindow : FluentWindow
 {
     private readonly MainViewModel _viewModel;
     private System.Windows.Forms.NotifyIcon? _trayIcon;
@@ -12,6 +14,8 @@ public partial class MainWindow : System.Windows.Window
 
     public MainWindow()
     {
+        SystemThemeWatcher.Watch(this);
+
         InitializeComponent();
         _viewModel = new MainViewModel();
         DataContext = _viewModel;
@@ -21,15 +25,16 @@ public partial class MainWindow : System.Windows.Window
 
     public void ProcessUrl(string url)
     {
-        var interceptor = new UrlInterceptorService(new ConfigurationService());
+        var interceptor = new UrlInterceptorService(
+            new RuleService(), new DefaultBrowserService());
         if (interceptor.TryRoute(url))
         {
             if (IsLoaded)
-                StatusText.Text = $"Routed: {url}";
+                _viewModel.Status = $"Routed: {url}";
             return;
         }
 
-        StatusText.Text = $"No match: {url}";
+        _viewModel.Status = $"No match: {url}";
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)

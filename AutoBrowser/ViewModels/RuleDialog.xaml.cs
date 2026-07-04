@@ -1,14 +1,17 @@
 using System.Windows;
 using AutoBrowser.Models;
+using Wpf.Ui.Appearance;
+using Wpf.Ui.Controls;
 
 namespace AutoBrowser.ViewModels;
 
-public partial class RuleDialog : System.Windows.Window
+public partial class RuleDialog : FluentWindow
 {
     public RoutingRule Rule { get; private set; }
 
     public RuleDialog()
     {
+        SystemThemeWatcher.Watch(this);
         InitializeComponent();
         Rule = new RoutingRule();
         Owner = System.Windows.Application.Current.MainWindow;

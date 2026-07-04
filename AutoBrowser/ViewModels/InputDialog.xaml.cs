@@ -1,11 +1,15 @@
+using Wpf.Ui.Appearance;
+using Wpf.Ui.Controls;
+
 namespace AutoBrowser.ViewModels;
 
-public partial class InputDialog : System.Windows.Window
+public partial class InputDialog : FluentWindow
 {
     public string? Result { get; private set; }
 
     public InputDialog(string title, string prompt, string defaultValue = "")
     {
+        SystemThemeWatcher.Watch(this);
         InitializeComponent();
         Title = title;
         PromptText.Text = prompt;

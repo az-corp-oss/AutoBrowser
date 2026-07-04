@@ -1,14 +1,20 @@
-﻿using AutoBrowser.Services;
+﻿using AutoBrowser.Models;
+using AutoBrowser.Services;
+using Wpf.Ui.Appearance;
 
 namespace AutoBrowser;
 
 public partial class App : System.Windows.Application
 {
     private static readonly string MutexName = "AutoBrowser-SingleInstance";
+    private ISettingsService? _settingsService;
+    public AppThemeMode CurrentThemeMode { get; private set; }
 
     protected override void OnStartup(System.Windows.StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        _settingsService = new SettingsService();
 
         if (e.Args.Length > 0)
         {
@@ -17,7 +23,8 @@ public partial class App : System.Windows.Application
                 || url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
                 || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
-                var interceptor = new UrlInterceptorService(new ConfigurationService());
+                var interceptor = new UrlInterceptorService(
+                    new RuleService(), new DefaultBrowserService());
                 if (interceptor.TryRoute(url))
                 {
                     Shutdown();
@@ -35,7 +42,19 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        var settings = _settingsService.LoadSettings();
+        ApplyTheme(settings.ThemeMode);
+
         var mainWindow = new MainWindow();
         mainWindow.Show();
+    }
+
+    public void ApplyTheme(AppThemeMode mode)
+    {
+        var theme = mode == AppThemeMode.Dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+
+        ApplicationThemeManager.Apply(theme);
+        CurrentThemeMode = mode;
+        _settingsService?.SaveSettings(new AppSettings { ThemeMode = mode });
     }
 }

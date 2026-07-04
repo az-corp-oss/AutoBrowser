@@ -9,10 +9,21 @@ namespace AutoBrowser.ViewModels;
 
 public class MainViewModel : INotifyPropertyChanged
 {
-    private readonly IConfigurationService _configService;
+    private readonly IRuleService _ruleService;
+    private readonly IProtocolService _protocolService;
+    private readonly IDefaultBrowserService _defaultBrowserService;
+    private readonly ISettingsService _settingsService;
     private RoutingRule? _selectedRule;
+    private bool _isDarkTheme;
+    private string _status = "Ready";
 
     public ObservableCollection<RoutingRule> Rules { get; } = [];
+
+    public string Status
+    {
+        get => _status;
+        set { _status = value; OnPropertyChanged(); }
+    }
 
     public RoutingRule? SelectedRule
     {
@@ -20,39 +31,51 @@ public class MainViewModel : INotifyPropertyChanged
         set { _selectedRule = value; OnPropertyChanged(); }
     }
 
+    public bool IsDarkTheme
+    {
+        get => _isDarkTheme;
+        set
+        {
+            _isDarkTheme = value;
+            ((App)System.Windows.Application.Current).ApplyTheme(value ? AppThemeMode.Dark : AppThemeMode.Light);
+            Status = value ? "Switched to Dark theme" : "Switched to Light theme";
+            OnPropertyChanged();
+        }
+    }
+
     public bool IsProtocolRegistered
     {
-        get => _configService.IsProtocolRegistered();
+        get => _protocolService.IsProtocolRegistered();
         set
         {
             if (value)
-                _configService.RegisterProtocolHandler();
+            {
+                _protocolService.RegisterProtocolHandler();
+                Status = "autobrowser:// protocol registered";
+            }
             else
-                _configService.UnregisterProtocolHandler();
+            {
+                _protocolService.UnregisterProtocolHandler();
+                Status = "autobrowser:// protocol unregistered";
+            }
             OnPropertyChanged();
         }
     }
 
     public bool IsDefaultBrowser
     {
-        get => _configService.IsDefaultBrowser();
+        get => _defaultBrowserService.IsDefaultBrowser();
         set
         {
             if (value)
             {
-                var ok = _configService.RegisterAsDefaultBrowser();
-                if (ok)
-                    System.Windows.MessageBox.Show(
-                        "Now set AutoBrowser as default in:\nSettings → Default Apps → AutoBrowser",
-                        "Default Browser", System.Windows.MessageBoxButton.OK,
-                        System.Windows.MessageBoxImage.Information);
-                else
-                    System.Windows.MessageBox.Show("Failed to register as default browser.",
-                        "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                _defaultBrowserService.RegisterAsDefaultBrowser();
+                Status = "Registered as default browser — select AutoBrowser in Settings > Default Apps";
             }
             else
             {
-                _configService.UnregisterAsDefaultBrowser();
+                _defaultBrowserService.UnregisterAsDefaultBrowser();
+                Status = "Unregistered as default browser";
             }
             OnPropertyChanged();
         }
@@ -67,8 +90,14 @@ public class MainViewModel : INotifyPropertyChanged
 
     public MainViewModel()
     {
-        _configService = new ConfigurationService();
+        _ruleService = new RuleService();
+        _protocolService = new ProtocolService();
+        _defaultBrowserService = new DefaultBrowserService();
+        _settingsService = new SettingsService();
         LoadRules();
+
+        var app = (App)System.Windows.Application.Current;
+        _isDarkTheme = app.CurrentThemeMode == AppThemeMode.Dark;
 
         AddRuleCommand = new RelayCommand(_ => AddRule());
         EditRuleCommand = new RelayCommand(_ => EditRule(), _ => SelectedRule is not null);
@@ -81,13 +110,13 @@ public class MainViewModel : INotifyPropertyChanged
     private void LoadRules()
     {
         Rules.Clear();
-        foreach (var rule in _configService.LoadRules())
+        foreach (var rule in _ruleService.LoadRules())
             Rules.Add(rule);
     }
 
     public void SaveRules()
     {
-        _configService.SaveRules([..Rules]);
+        _ruleService.SaveRules([..Rules]);
     }
 
     private void AddRule()
@@ -98,6 +127,7 @@ public class MainViewModel : INotifyPropertyChanged
             Rules.Add(dialog.Rule);
             SelectedRule = dialog.Rule;
             SaveRules();
+            Status = $"Rule \"{dialog.Rule.Name}\" added";
         }
     }
 
@@ -112,14 +142,17 @@ public class MainViewModel : INotifyPropertyChanged
             Rules[index] = dialog.Rule;
             SelectedRule = dialog.Rule;
             SaveRules();
+            Status = $"Rule \"{dialog.Rule.Name}\" updated";
         }
     }
 
     private void DeleteRule()
     {
         if (SelectedRule is null) return;
+        var name = SelectedRule.Name;
         Rules.Remove(SelectedRule);
         SaveRules();
+        Status = $"Rule \"{name}\" deleted";
     }
 
     private void MoveUp()
@@ -142,6 +175,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         Rules.Move(index, newIndex);
         SaveRules();
+        Status = $"Rule \"{SelectedRule.Name}\" moved";
     }
 
     private void LaunchUrl()
@@ -151,12 +185,11 @@ public class MainViewModel : INotifyPropertyChanged
         var url = dialog.Result;
         if (string.IsNullOrWhiteSpace(url)) return;
 
-        var interceptor = new UrlInterceptorService(_configService);
-        if (!interceptor.TryRoute(url))
-        {
-            System.Windows.MessageBox.Show("No matching rule found — opened in default browser.",
-                "AutoBrowser", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-        }
+        var interceptor = new UrlInterceptorService(_ruleService, _defaultBrowserService);
+        if (interceptor.TryRoute(url))
+            Status = $"Routed: {url}";
+        else
+            Status = $"No match — opened in default browser: {url}";
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -166,3 +199,4 @@ public class MainViewModel : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
+
