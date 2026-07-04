@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using AutoBrowser.Models;
 using AutoBrowser.Services;
+using AutoBrowser.Views;
 
 namespace AutoBrowser.ViewModels;
 
@@ -45,8 +46,11 @@ public class MainViewModel : INotifyPropertyChanged
             ((App)System.Windows.Application.Current).ApplyTheme(value ? AppThemeMode.Dark : AppThemeMode.Light);
             Status = value ? "Switched to Dark theme" : "Switched to Light theme";
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ThemeLabel));
         }
     }
+
+    public string ThemeLabel => _isDarkTheme ? "Dark" : "Light";
 
     public bool IsProtocolRegistered
     {
@@ -232,7 +236,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void AddRule()
     {
-        var dialog = new RuleDialog();
+        var dialog = new RuleEditorView();
         if (dialog.ShowDialog() == true)
         {
             Rules.Add(dialog.Rule);
@@ -247,7 +251,7 @@ public class MainViewModel : INotifyPropertyChanged
         if (SelectedRule is null) return;
 
         var index = Rules.IndexOf(SelectedRule);
-        var dialog = new RuleDialog(SelectedRule);
+        var dialog = new RuleEditorView(SelectedRule);
         if (dialog.ShowDialog() == true)
         {
             Rules[index] = dialog.Rule;
@@ -291,7 +295,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void LaunchUrl()
     {
-        var dialog = new InputDialog("Test URL", "Enter URL to test routing:", "https://");
+        var dialog = new RuleTesterView("Test URL", "Enter URL to test routing:", "https://");
         dialog.ShowDialog();
         var url = dialog.Result;
         if (string.IsNullOrWhiteSpace(url)) return;

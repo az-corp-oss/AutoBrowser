@@ -30,38 +30,46 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Toolbar -->
-            <Border Grid.Row="0" Margin="0,0,0,4" Padding="4,2"
+            <Border Grid.Row="0" Margin="0,0,0,4" Padding="6,3"
                     Background="{DynamicResource CardBackgroundBrush}"
                     BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                     BorderThickness="1" CornerRadius="4">
-                <WrapPanel>
-                <ui:Button Content="Add Rule" Command="{Binding AddRuleCommand}" Margin="0,0,4,4"/>
-                <ui:Button Content="Edit Rule" Command="{Binding EditRuleCommand}" Margin="0,0,4,4"/>
-                <ui:Button Content="Delete Rule" Command="{Binding DeleteRuleCommand}" Margin="0,0,4,4"/>
-                <Rectangle Width="1" Fill="{DynamicResource ControlElevationBorderBrush}" Margin="4,2"/>
-                <ui:Button Content="Move Up" Command="{Binding MoveUpCommand}" Margin="0,0,4,4"/>
-                <ui:Button Content="Move Down" Command="{Binding MoveDownCommand}" Margin="0,0,4,4"/>
-                <Rectangle Width="1" Fill="{DynamicResource ControlElevationBorderBrush}" Margin="4,2"/>
-                <CheckBox Content="autobrowser:// protocol" IsChecked="{Binding IsProtocolRegistered}"
-                          Margin="4,0" VerticalAlignment="Center"
-                          Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                <CheckBox Content="Registered as default browser" IsChecked="{Binding IsDefaultBrowser}"
-                          Margin="4,0" VerticalAlignment="Center"
-                          Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                <Rectangle Width="1" Fill="{DynamicResource ControlElevationBorderBrush}" Margin="4,2"/>
-                <TextBlock Text="Dark Mode:" Margin="4,0,0,0" VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                <ui:ToggleSwitch IsChecked="{Binding IsDarkTheme}"
-                                 Margin="2,0" VerticalAlignment="Center"/>
-                <Rectangle Width="1" Fill="{DynamicResource ControlElevationBorderBrush}" Margin="4,2"/>
-                <ui:Button Content="Test URL..." Command="{Binding LaunchUrlCommand}" Margin="0,0,4,4"/>
-                <Rectangle Width="1" Fill="{DynamicResource ControlElevationBorderBrush}" Margin="4,2"/>
-                <ui:Button Content="Check Update" Command="{Binding CheckForUpdateCommand}"
-                           IsEnabled="{Binding CanCheckForUpdate}" Margin="0,0,4,4"/>
-            </WrapPanel>
+                <DockPanel>
+                    <!-- Right-aligned: Check Update -->
+                    <ui:Button Content="Check Update" Command="{Binding CheckForUpdateCommand}"
+                               IsEnabled="{Binding CanCheckForUpdate}" DockPanel.Dock="Right"/>
+
+                    <!-- Left-aligned groups -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Rule management -->
+                        <ui:Button Content="Add" Command="{Binding AddRuleCommand}" Margin="0,0,3,0"/>
+                        <ui:Button Content="Edit" Command="{Binding EditRuleCommand}" Margin="3,0"/>
+                        <ui:Button Content="Delete" Command="{Binding DeleteRuleCommand}" Margin="3,0,0,0"/>
+
+                        <Rectangle Width="1" Height="20" Fill="{DynamicResource ControlElevationBorderBrush}" Margin="6,0"/>
+
+                        <!-- Rule ordering -->
+                        <ui:Button Content="Move Up" Command="{Binding MoveUpCommand}" Margin="0,0,3,0"/>
+                        <ui:Button Content="Move Down" Command="{Binding MoveDownCommand}"/>
+
+                        <Rectangle Width="1" Height="20" Fill="{DynamicResource ControlElevationBorderBrush}" Margin="6,0"/>
+
+                        <!-- Settings -->
+                        <TextBlock Text="{Binding ThemeLabel}" Margin="0,0,2,0" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        <ui:ToggleSwitch IsChecked="{Binding IsDarkTheme}"
+                                         VerticalAlignment="Center"/>
+
+                        <Rectangle Width="1" Height="20" Fill="{DynamicResource ControlElevationBorderBrush}" Margin="6,0"/>
+
+                        <!-- Tools -->
+                        <ui:Button Content="Test URL" Command="{Binding LaunchUrlCommand}"/>
+                    </StackPanel>
+                </DockPanel>
             </Border>
 
             <!-- Rule list -->
@@ -91,6 +99,16 @@
                     </ui:GridView>
                 </ui:ListView.View>
             </ui:ListView>
+
+            <!-- Bottom-right registration checkboxes -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,4,0,0">
+                <CheckBox Content="autobrowser://" IsChecked="{Binding IsProtocolRegistered}"
+                          Margin="0,0,12,0" VerticalAlignment="Center"
+                          Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                <CheckBox Content="Default browser" IsChecked="{Binding IsDefaultBrowser}"
+                          VerticalAlignment="Center"
+                          Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
         </Grid>
 
         <!-- Status bar -->

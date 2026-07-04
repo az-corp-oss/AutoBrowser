@@ -3,13 +3,13 @@ using AutoBrowser.Models;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
-namespace AutoBrowser.ViewModels;
+namespace AutoBrowser.Views;
 
-public partial class RuleDialog : FluentWindow
+public partial class RuleEditorView : FluentWindow
 {
     public RoutingRule Rule { get; private set; }
 
-    public RuleDialog()
+    public RuleEditorView()
     {
         SystemThemeWatcher.Watch(this);
         InitializeComponent();
@@ -20,9 +20,11 @@ public partial class RuleDialog : FluentWindow
         BrowserCombo.ItemsSource = browsers;
         if (browsers.Count > 0)
             BrowserCombo.SelectedIndex = 0;
+
+        Loaded += (_, _) => BrowserPathBox.Focus();
     }
 
-    public RuleDialog(RoutingRule existing) : this()
+    public RuleEditorView(RoutingRule existing) : this()
     {
         NameBox.Text = existing.Name;
         PatternBox.Text = existing.UrlPattern;

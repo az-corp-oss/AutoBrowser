@@ -1,13 +1,13 @@
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
-namespace AutoBrowser.ViewModels;
+namespace AutoBrowser.Views;
 
-public partial class InputDialog : FluentWindow
+public partial class RuleTesterView : FluentWindow
 {
     public string? Result { get; private set; }
 
-    public InputDialog(string title, string prompt, string defaultValue = "")
+    public RuleTesterView(string title, string prompt, string defaultValue = "")
     {
         SystemThemeWatcher.Watch(this);
         InitializeComponent();
