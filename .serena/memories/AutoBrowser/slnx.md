@@ -5,10 +5,13 @@ The solution file at `AutoBrowser.slnx` (repo root) uses the modern SLNX XML for
 ```xml
 <Solution>
   <Project Path="src/AutoBrowser/AutoBrowser.csproj" />
-</Solution>```
+  <Project Path="src/AutoUpdater/AutoUpdater.csproj" />
+</Solution>
+```
 
-- Uses forward slashes (`src/AutoBrowser/AutoBrowser.csproj`) per SLNX convention.
+- Uses forward slashes per SLNX convention.
 - Build configs: Debug, Release, Any CPU.
-- SLNX has no built-in post-action command mechanism; auto-restore is handled by the .NET SDK on build.
-- The `bin/` and `obj/` dirs are in `.gitignore`.
-- Root-level `publish/` is also in `.gitignore`.
+- `bin/` and `obj/` dirs are in `.gitignore`.
+- Root-level `publish/` also in `.gitignore`.
+- AutoUpdater is a build dependency only (`ReferenceOutputAssembly="false"` in main csproj).
+- Post-build `CopyUpdater` target copies `AutoUpdater*` files into main app output.

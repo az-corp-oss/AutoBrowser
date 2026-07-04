@@ -8,40 +8,38 @@ WPF .NET 10 app for routing URLs to different browsers based on configurable rul
 
 ## Structure
 ```
-AutoBrowser/
-├── Models/
-│   ├── RoutingRule.cs          — Rule: Name, UrlPattern (regex), BrowserPath, BrowserArguments, IsEnabled, Priority
-│   └── BrowserDefinition.cs    — Browser detection (paths + registry), multi-resolution scanning
-├── Services/
-│   ├── IConfigurationService.cs / ConfigurationService.cs — JSON config in `Data/rules.json`, protocol/default browser registration
-│   └── UrlInterceptorService.cs — URL matching, browser launching, fallback to saved default browser
-├── ViewModels/
-│   ├── MainViewModel.cs        — Rule CRUD, toggle protocol/default browser registration, test URL
-│   ├── RelayCommand.cs
-│   ├── RuleDialog.xaml/.cs     — Add/edit rule with detected browsers dropdown + manual path
-│   └── InputDialog.xaml/.cs    — Simple input prompt
-├── MainWindow.xaml/.cs         — Rule list UI, system tray icon
-├── App.xaml/.cs                — Single-instance, protocol URL handling at startup
-└── app.ico                     — Multi-res icon (16-256px, routing arrow)
+src/
+├── AutoBrowser/                     — Main WPF app
+│   ├── Models/                      — RoutingRule, BrowserDefinition, AppSettings, ReleaseInfo
+│   ├── Services/                    — RuleService, SettingsService, ProtocolService,
+│   │                                  DefaultBrowserService, UrlInterceptorService, UpdateService
+│   ├── ViewModels/                  — MainViewModel, RelayCommand, RuleDialog, InputDialog
+│   ├── MainWindow.xaml/.cs          — UI + tray icon
+│   ├── App.xaml/.cs                 — Single-instance, theme, CLI URL dispatch
+│   └── app.ico
+├── AutoUpdater/                     — AOT console EXE for update file swap + relaunch
+│   └── Program.cs
+├── AutoBrowser.slnx                 — Solution file (SLNX format)
+└── .github/workflows/release.yml    — Build + publish + GitHub release
 ```
 
 ## Key Features
 - URL routing rules with regex pattern matching, ordered by priority
-- Detects browsers via common install paths, App Paths registry, RegisteredApplications (both HKLM and HKCU)
-- Checks per-user installs (`%LOCALAPPDATA%`) for browsers and release channels (Chrome Beta/Canary, Firefox Dev/Nightly, etc.)
+- Detects browsers via common install paths, App Paths registry, RegisteredApplications
 - System tray with show/exit
 - `autobrowser://` protocol handler registration
 - Default browser registration (appears in Windows Default Apps)
 - Falls back to saved default browser when no rule matches (avoids infinite loops)
 - Portable: all data in `Data/` folder next to exe
+- Auto-update: checks GitHub releases on startup + manual button
+- CI: pre-release on branch push, stable on tag push; revision from UTC time-of-day
 
 ## Important Build/Run Commands
 - Restore: `dotnet restore AutoBrowser.slnx`
 - Build (solution): `dotnet build AutoBrowser.slnx`
 - Verify while app runs (staging, no kill): `dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging`
-- Full build: `dotnet build AutoBrowser.slnx`
+- Full build: `dotnet build src\AutoBrowser\AutoBrowser.csproj`
 - Run: `dotnet run --project src\AutoBrowser\AutoBrowser.csproj` or run EXE directly
-- Must run and close after every change to verify runtime behavior
 
 ## Registry Registration
 - Protocol handler: `HKCU\Software\Classes\autobrowser`

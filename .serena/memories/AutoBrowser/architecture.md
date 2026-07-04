@@ -3,7 +3,12 @@
 ## Overview
 WPF desktop app for Windows. Registers as `autobrowser://` protocol handler and optional default browser, then routes URLs to user-configured browsers by regex rules. Lives in system tray, minimizes on close.
 
-## Project Layout
+## AutoUpdater (src/AutoUpdater/)
+- Standalone AOT console EXE for file swap + relaunch (no runtime dependency)
+- Build dependency via `ReferenceOutputAssembly="false"` in main csproj
+- Post-build MSBuild target copies all `AutoUpdater*` files into main app output
+
+$1
 ```
 AutoBrowser/
 ├── app.ico                      # Multi-res icon
@@ -21,6 +26,8 @@ AutoBrowser/
 │   ├── IProtocolService.cs / ProtocolService.cs   # autobrowser:// registry ops
 │   ├── IDefaultBrowserService.cs / DefaultBrowserService.cs  # Default browser reg
 │   └── UrlInterceptorService.cs                   # URL matching + browser launch
+│   ├── UpdateService.cs                       # GitHub release check, download, update install
+│   └── ReleaseInfo.cs                         # Version + download URL model
 └── ViewModels/
     ├── MainViewModel.cs         # CRUD, reorder, toggle, reg checkboxes, test URL, IsDarkTheme
     ├── RelayCommand.cs          # ICommand impl

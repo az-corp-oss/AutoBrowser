@@ -15,7 +15,14 @@
 - Only Exit menu item truly terminates
 - `SaveRules()` called on close
 
-## Important Build/Run Commands
+## Update Check
+- **Button**: "Check Update" in toolbar, bound to `CheckForUpdateCommand`, disabled while checking/downloading
+- **Auto-check**: `_ = CheckForUpdateSilentAsync()` runs on startup, silently ignores no-update/offline
+- **Dialog**: `Wpf.Ui.Controls.MessageBox` (500px wide) with Yes/No — no third Cancel button
+- **Silent flow**: fires `ShowUpdateDialogAsync` only when newer version found
+- **Manual flow**: shows status for checking/up-to-date/failed, then delegates to `ShowUpdateDialogAsync`
+
+$1
 - **Verify compilation (app running)**: `dotnet build AutoBrowser\AutoBrowser.csproj -o AutoBrowser\bin\Debug\net10.0-windows_staging` — does NOT kill the running app, output goes to `_staging` folder
 - **Full build (kills app)**: `dotnet build` — only when intentionally overwriting the running binary
 - **Run**: `dotnet run` or run exe directly

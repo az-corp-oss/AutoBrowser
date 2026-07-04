@@ -1,6 +1,35 @@
 # AutoBrowser — Data Flow & URL Matching
 
-## URL Flow
+## Start-up Flow
+1. ViewModel constructor → loads rules/theme, binds commands
+2. `_ = CheckForUpdateSilentAsync()` — fire-and-forget update check
+3. Silent check: if no release or up-to-date → nothing; if newer → shows Update Available dialog
+4. Manual "Check Update" button: full status feedback + same dialog
+
+## Update Flow
+```
+User clicks "Check Update" / app starts
+  → MainViewModel.CheckForUpdateAsync / CheckForUpdateSilentAsync
+  → UpdateService.CheckForUpdateAsync() — queries /releases?per_page=10
+  → No release → show "No release info" (manual) / silent (auto)
+  → Up-to-date → show status (manual) / silent (auto)
+  → New version → Wpf.Ui.Controls.MessageBox (Yes/No, 500px)
+  → Yes → UpdateService.DownloadAndUpdateAsync()
+      1. Download ZIP from GitHub
+      2. Extract to temp workspace
+      3. Copy AutoUpdater.exe from app dir to runner dir
+      4. Launch AutoUpdater.exe (waits for main process to exit)
+      5. Main app shuts down
+  → AutoUpdater.exe:
+      1. Wait for main process exit (2 min)
+      2. Back up old files
+      3. Copy new files with SHA256 + 5 retries
+      4. Verify hashes
+      5. On failure → restore backup
+      6. Relaunch main app
+```
+
+$1
 ```
 URL arrives (autobrowser:// or default click)
   → App.OnStartup (CLI args) or MainWindow.OnLoaded (second instance)

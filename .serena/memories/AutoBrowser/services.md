@@ -8,7 +8,24 @@ Order (duplicates skipped by EXE path):
 4. **System default browser** — `HKCU\UserChoice` ProgId, inserted at index 0 as "default"
 5. **RegisteredApplications** — HKLM + HKCU `\Software\RegisteredApplications`
 
-## JSON Persistence
+## Update Check (UpdateService)
+
+- `CheckForUpdateAsync()` queries GitHub releases (`/releases?per_page=10`) — includes pre-releases
+- Compares parsed version to entry assembly version
+- Returns `ReleaseInfo` with `IsNewer`, `Version`, download URL
+- `DownloadAndUpdateAsync()` — downloads ZIP, extracts to temp, finds `AutoUpdater.exe` in app dir, copies to runner folder, launches updater, shuts down main app
+- 404 (no releases) handled gracefully
+- Asset selection: picks ZIP matching "self-contained" or "framework-dependent" based on `coreclr.dll` presence
+
+## AutoUpdater (src/AutoUpdater/)
+- **AOT** (`PublishAot=true`) console helper EXE (`AutoUpdater.exe`)
+- Waits for main process to exit (2 min timeout)
+- Backs up old files, copies new ones with SHA256 validation + 5 retries
+- Rollback on failure, relaunches main app on success
+- `asInvoker` manifest (no admin)
+- Post-build MSBuild target copies `AutoUpdater*` from updater output to main app output
+
+$1
 ### Rules (`Data/rules.json`)
 - JSON array of `RoutingRule`, `WriteIndented = true`
 - Save triggers: Add, Edit, Delete, Move Up/Down, Toggle Enable/Disable, Window close
