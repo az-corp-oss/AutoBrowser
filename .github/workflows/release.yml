@@ -43,13 +43,37 @@ jobs:
           Compress-Archive publish\framework-dependent\AutoBrowser.exe publish\AutoBrowser-$v-framework-dependent.zip
           Compress-Archive publish\self-contained\AutoBrowser.exe publish\AutoBrowser-$v-self-contained.zip
 
+      - shell: pwsh
+        run: |
+          $tag = "v$env:VERSION"
+          $prev = git describe --tags --abbrev=0 $tag^ 2>$null
+          if (-not $prev) { $prev = "HEAD~3" }
+
+          $log = git log "$prev..HEAD" --oneline --reverse
+          $commits = ""
+          foreach ($line in $log) {
+            $hash, $msg = $line -split ' ', 2
+            $url = "https://github.com/$env:GITHUB_REPOSITORY/commit/$hash"
+            $commits += "- [$hash]($url) — $msg`n"
+          }
+
+          $body = @"
+          ## AutoBrowser v$env:VERSION
+
+          ### What's Changed
+
+          $commits
+          ### Downloads
+
+          - **AutoBrowser-$env:VERSION-framework-dependent.zip** — requires .NET 10 runtime
+          - **AutoBrowser-$env:VERSION-self-contained.zip** — standalone, no runtime needed
+          "@
+
+          Set-Content -Path "$env:RUNNER_TEMP/release-notes.md" -Value $body -Encoding utf8
+
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
           name: v${{ env.VERSION }}
           files: publish/AutoBrowser-*.zip
-          body: |
-            ## AutoBrowser v${{ env.VERSION }}
-
-            - **AutoBrowser-${{ env.VERSION }}-framework-dependent.zip** — requires .NET 10 runtime
-            - **AutoBrowser-${{ env.VERSION }}-self-contained.zip** — standalone, no runtime needed
+          body_path: ${{ runner.temp }}/release-notes.md
