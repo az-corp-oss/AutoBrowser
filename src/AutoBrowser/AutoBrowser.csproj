@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <Target Name="BuildUpdater" BeforeTargets="CopyUpdater">
-        <MSBuild Projects="..\AutoUpdater\AutoUpdater.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+        <MSBuild Projects="..\AutoUpdater\AutoUpdater.csproj" Targets="Build" Properties="Configuration=$(Configuration);TargetFramework=net10.0" />
     </Target>
 
     <Target Name="CopyUpdater" AfterTargets="Build">
