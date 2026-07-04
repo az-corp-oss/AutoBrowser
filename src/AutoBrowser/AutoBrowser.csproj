@@ -20,9 +20,9 @@
       <PackageReference Include="WPF-UI" Version="4.3.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\AutoUpdater\AutoUpdater.csproj" ReferenceOutputAssembly="false" />
-    </ItemGroup>
+    <Target Name="BuildUpdater" BeforeTargets="CopyUpdater">
+        <MSBuild Projects="..\AutoUpdater\AutoUpdater.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+    </Target>
 
     <Target Name="CopyUpdater" AfterTargets="Build">
         <ItemGroup>
