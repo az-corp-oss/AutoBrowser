@@ -1,4 +1,7 @@
-# Commit Strategy
+# Commit Strategy — CRITICAL
+
+## Golden Rule
+**NEVER commit or push without explicit user permission.** Wait to be asked.
 
 ## Split Large Changes
 When there are too many changes, split the commit into multiple logical commits instead of one large commit.

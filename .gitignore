@@ -256,6 +256,10 @@ DocProject/Help/*.hhp
 DocProject/Help/Html2
 DocProject/Help/html
 
+# Build artifacts
+[Bb]in/
+[Oo]bj/
+
 # Click-Once directory
 publish/
 

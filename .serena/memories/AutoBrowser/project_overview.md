@@ -36,19 +36,11 @@ AutoBrowser/
 - Portable: all data in `Data/` folder next to exe
 
 ## Important Build/Run Commands
-- Verify compilation while app is running: `dotnet build AutoBrowser\AutoBrowser.csproj -o AutoBrowser\bin\Debug\net10.0-windows_staging`
-- Full build (kills running app): `dotnet build`
-- Run: `dotnet run` or run exe directly
-- Must run and close after every change to verify runtime behavior
-
-
-- Build: `dotnet build` (auto-kills any running AutoBrowser.exe before compile)
-- Run: `dotnet run` or run exe directly
-- Must run and close after every change to verify runtime behavior
-
-
-- Build: `dotnet build` (slnx at root)
-- Run: `dotnet run` or run exe directly
+- Restore: `dotnet restore AutoBrowser.slnx`
+- Build (solution): `dotnet build AutoBrowser.slnx`
+- Verify while app runs (staging, no kill): `dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging`
+- Full build: `dotnet build AutoBrowser.slnx`
+- Run: `dotnet run --project src\AutoBrowser\AutoBrowser.csproj` or run EXE directly
 - Must run and close after every change to verify runtime behavior
 
 ## Registry Registration
