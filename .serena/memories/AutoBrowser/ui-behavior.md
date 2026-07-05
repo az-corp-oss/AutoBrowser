@@ -5,7 +5,7 @@
 - **Enum**: `AppThemeMode` — `Light` (0), `Dark` (1) — `System` removed
 - **Default**: `Light`
 - **Flow**: `App.OnStartup` → loads settings → `ApplyTheme(mode)` → MainViewModel reads `App.CurrentThemeMode` to init toggle state
-- **Toggle setter** → `App.ApplyTheme(Dark|Light)` → `ApplicationThemeManager.Apply()` + persists to `Data/settings.json`
+- **Toggle setter** → `App.ApplyTheme(Dark|Light)` → `ApplicationThemeManager.Apply()` + loads existing settings → sets `ThemeMode` → persists to `Data/settings.json`
 - **`App.CurrentThemeMode`** property prevents desync from stale settings values
 
 ## System Tray

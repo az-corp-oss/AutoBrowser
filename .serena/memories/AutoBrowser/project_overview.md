@@ -34,6 +34,10 @@ src/
 - Auto-update: checks GitHub releases on startup + manual button
 - CI: pre-release on branch push, stable on tag push; revision from UTC time-of-day
 
+## Developer Tools
+- **Serena MCP** — semantic code analysis (symbol search, references, refactoring) via `opencode.json`
+- **AGENTS.md** — instructions for AI agents working on this project
+
 ## Important Build/Run Commands
 - Restore: `dotnet restore AutoBrowser.slnx`
 - Build (solution): `dotnet build AutoBrowser.slnx`
