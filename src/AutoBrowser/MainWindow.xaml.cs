@@ -59,6 +59,7 @@ public partial class MainWindow : FluentWindow
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         SetupTrayIcon();
+        _viewModel.StartSilentUpdateCheck();
 
         var args = Environment.GetCommandLineArgs();
         if (args.Length > 1)

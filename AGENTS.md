@@ -101,7 +101,7 @@ After **any** code or XAML change, run this sequence to confirm the app starts w
 1. Build: `dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging`
 2. Launch, wait 5s, close:
    ```powershell
-   $proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 5; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+   $proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 10; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
    ```
 3. Check the log at `bin\staging\Logs/` for any `[ERR]` entries.
 

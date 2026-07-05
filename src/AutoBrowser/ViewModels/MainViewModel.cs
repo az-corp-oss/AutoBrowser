@@ -158,6 +158,10 @@ public class MainViewModel : INotifyPropertyChanged
         MoveDownCommand = new RelayCommand(_ => MoveDown(), _ => SelectedRule is not null);
         LaunchUrlCommand = new RelayCommand(_ => LaunchUrl());
         CheckForUpdateCommand = new RelayCommand(async _ => await CheckForUpdateAsync());
+    }
+
+    public void StartSilentUpdateCheck()
+    {
         _ = CheckForUpdateSilentAsync();
     }
 
@@ -169,10 +173,12 @@ public class MainViewModel : INotifyPropertyChanged
             var release = await _updateService.CheckForUpdateAsync();
             if (release is null || !release.IsNewer)
             {
+                Status = "App is up to date";
                 Log.Debug("Silent update check: no update available");
                 return;
             }
             Log.Information("Silent update check: v{Version} available, showing dialog", release.Version);
+            Status = $"Update available: v{release.Version}";
             await ShowUpdateDialogAsync(release);
         }
         catch (Exception ex)
