@@ -23,8 +23,10 @@ public class MainViewModel : INotifyPropertyChanged
     private string _updateStatus = "";
     private bool _isCheckingUpdate;
     private bool _isDownloadingUpdate;
+    private BrowserDefinition? _fallbackBrowser;
 
     public ObservableCollection<RoutingRule> Rules { get; } = [];
+    public List<BrowserDefinition> AvailableBrowsers { get; } = BrowserDefinition.GetKnownBrowsers();
 
     public string Status
     {
@@ -36,6 +38,20 @@ public class MainViewModel : INotifyPropertyChanged
     {
         get => _selectedRule;
         set { _selectedRule = value; OnPropertyChanged(); }
+    }
+
+    public BrowserDefinition? FallbackBrowser
+    {
+        get => _fallbackBrowser;
+        set
+        {
+            _fallbackBrowser = value;
+            var settings = _settingsService.LoadSettings();
+            settings.FallbackBrowserPath = value?.ExecutablePath ?? string.Empty;
+            _settingsService.SaveSettings(settings);
+            Status = value is not null ? $"Fallback: {value.DisplayName}" : "Fallback browser cleared";
+            OnPropertyChanged();
+        }
     }
 
     public bool IsDarkTheme
@@ -129,6 +145,11 @@ public class MainViewModel : INotifyPropertyChanged
 
         var app = (App)System.Windows.Application.Current;
         _isDarkTheme = app.CurrentThemeMode == AppThemeMode.Dark;
+
+        var settings = _settingsService.LoadSettings();
+        if (!string.IsNullOrEmpty(settings.FallbackBrowserPath))
+            _fallbackBrowser = AvailableBrowsers.FirstOrDefault(b =>
+                b.ExecutablePath.Equals(settings.FallbackBrowserPath, StringComparison.OrdinalIgnoreCase));
 
         AddRuleCommand = new RelayCommand(_ => AddRule());
         EditRuleCommand = new RelayCommand(_ => EditRule(), _ => SelectedRule is not null);
@@ -309,16 +330,35 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void LaunchUrl()
     {
-        var dialog = new RuleTesterView("Test URL", "Enter URL to test routing:", "https://");
+        var dialog = new RuleTesterView("Test URL", "Enter URL to test routing:");
         dialog.ShowDialog();
         var url = dialog.Result;
         if (string.IsNullOrWhiteSpace(url)) return;
 
         var interceptor = new UrlInterceptorService(_ruleService, _defaultBrowserService);
-        if (interceptor.TryRoute(url))
+        if (interceptor.TryRoute(url, FallbackBrowser?.ExecutablePath))
             Status = $"Routed: {url}";
         else
-            Status = $"No match — opened in default browser: {url}";
+        {
+            Status = $"No match: {url}";
+            ShowNotification("AutoBrowser", $"No rule matched and no fallback browser set.\n{url}");
+        }
+    }
+
+    private static void ShowNotification(string title, string message)
+    {
+        try
+        {
+            using var icon = new System.Windows.Forms.NotifyIcon
+            {
+                Icon = System.Drawing.Icon.ExtractAssociatedIcon(
+                    Environment.ProcessPath ?? ""),
+                Visible = true
+            };
+            icon.ShowBalloonTip(3000, title, message,
+                System.Windows.Forms.ToolTipIcon.Warning);
+        }
+        catch { }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
