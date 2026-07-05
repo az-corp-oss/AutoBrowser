@@ -6,6 +6,7 @@ using System.Windows.Input;
 using AutoBrowser.Models;
 using AutoBrowser.Services;
 using AutoBrowser.Views;
+using Serilog;
 
 namespace AutoBrowser.ViewModels;
 
@@ -143,13 +144,19 @@ public class MainViewModel : INotifyPropertyChanged
     {
         try
         {
+            Log.Information("Silent update check starting");
             var release = await _updateService.CheckForUpdateAsync();
-            if (release is null || !release.IsNewer) return;
+            if (release is null || !release.IsNewer)
+            {
+                Log.Debug("Silent update check: no update available");
+                return;
+            }
+            Log.Information("Silent update check: v{Version} available, showing dialog", release.Version);
             await ShowUpdateDialogAsync(release);
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently ignore errors on startup
+            Log.Error(ex, "Silent update check failed");
         }
     }
 
@@ -160,6 +167,7 @@ public class MainViewModel : INotifyPropertyChanged
         IsCheckingUpdate = true;
         UpdateStatus = "Checking for updates...";
         Status = UpdateStatus;
+        Log.Information("Manual update check starting");
 
         try
         {
@@ -168,6 +176,7 @@ public class MainViewModel : INotifyPropertyChanged
             {
                 UpdateStatus = "No release info available (no releases or offline).";
                 Status = UpdateStatus;
+                Log.Debug("Manual update check: no release info");
                 return;
             }
 
@@ -175,15 +184,18 @@ public class MainViewModel : INotifyPropertyChanged
             {
                 UpdateStatus = $"You're up to date (v{release.Version}).";
                 Status = UpdateStatus;
+                Log.Debug("Manual update check: up to date (v{Version})", release.Version);
                 return;
             }
 
+            Log.Debug("Manual update check: v{Version} available", release.Version);
             await ShowUpdateDialogAsync(release);
         }
         catch (Exception ex)
         {
             UpdateStatus = $"Update failed: {ex.Message}";
             Status = UpdateStatus;
+            Log.Error(ex, "Manual update check failed");
         }
         finally
         {
@@ -205,6 +217,8 @@ public class MainViewModel : INotifyPropertyChanged
         };
         dialog.Owner = System.Windows.Application.Current.MainWindow;
         var result = await dialog.ShowDialogAsync();
+
+        Log.Information("Update dialog result: {Result} for v{Version}", result, release.Version);
 
         if (result != Wpf.Ui.Controls.MessageBoxResult.Primary) return;
 

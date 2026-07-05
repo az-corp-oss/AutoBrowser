@@ -11,6 +11,31 @@ AutoBrowser is a WPF desktop app for Windows that routes URLs to user-configured
 - **UI Library**: WPF UI (`xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"`)
 - **Data Storage**: JSON files in `Data/` folder next to EXE (portable)
 - **Registry**: HKCU only, no admin elevation needed
+- **Logging**: Serilog with structured logging using message templates
+
+### Logging Level Convention
+
+When adding logs to methods, follow this level hierarchy:
+
+1. **Information** - Method entry and exit points (first and last logs)
+   - Method calls with key parameters
+   - Completion status with results
+   - Example: `Log.Information("TryRoute called with URL: {Url}", url)`
+
+2. **Debug** - Middle steps with braces/parameters
+   - Variable values with placeholders
+   - Conditional checks
+   - Example: `Log.Debug("Loaded {Count} enabled rules", rules.Count)`
+
+3. **Verbose** - Detailed internal steps (finest level)
+   - Fine-grained operations
+   - Individual loop iterations
+   - Example: `Log.Verbose("Checking rule '{RuleName}'", rule.Name)`
+
+4. **Error** - Exception handling
+   - Example: `Log.Error(ex, "LaunchBrowser failed")`
+
+**Note**: Serilog uses `Verbose` instead of `Trace` (equivalent level below Debug).
 
 ## Project Structure
 

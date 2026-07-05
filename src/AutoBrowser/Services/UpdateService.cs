@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using Serilog;
 
 namespace AutoBrowser.Services;
 
@@ -21,15 +22,25 @@ public class UpdateService
     {
         try
         {
+            Log.Information("Checking for updates from {Url}", ReleasesUrl);
             var resp = await Http.GetAsync(ReleasesUrl, ct);
 
             if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                Log.Warning("Update check: 404 Not Found");
                 return null;
+            }
 
             resp.EnsureSuccessStatusCode();
 
             var docs = await resp.Content.ReadFromJsonAsync<List<GitHubRelease>>(ct);
-            if (docs is null || docs.Count == 0) return null;
+            if (docs is null || docs.Count == 0)
+            {
+                Log.Warning("Update check: no releases found");
+                return null;
+            }
+
+            Log.Debug("Found {Count} releases", docs.Count);
 
             ReleaseInfo? best = null;
             Version? bestVer = null;
@@ -47,14 +58,20 @@ public class UpdateService
                 }
             }
 
-            if (best is null) return null;
+            if (best is null)
+            {
+                Log.Warning("Update check: no valid version tags found");
+                return null;
+            }
 
             var current = typeof(UpdateService).Assembly.GetName().Version;
             best = best with { IsNewer = current is null || best.Version > current };
+            Log.Information("Latest: v{Version}, Current: v{Current}, IsNewer: {IsNewer}", best.Version, current, best.IsNewer);
             return best;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Error(ex, "CheckForUpdateAsync failed");
             return null;
         }
     }
