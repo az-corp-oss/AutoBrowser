@@ -27,7 +27,8 @@ public partial class MainWindow : FluentWindow
     {
         var interceptor = new UrlInterceptorService(
             new RuleService(), new DefaultBrowserService());
-        if (interceptor.TryRoute(url))
+        var fallbackPath = _viewModel.FallbackBrowser?.ExecutablePath;
+        if (interceptor.TryRoute(url, fallbackPath))
         {
             if (IsLoaded)
                 _viewModel.Status = $"Routed: {url}";
@@ -35,6 +36,23 @@ public partial class MainWindow : FluentWindow
         }
 
         _viewModel.Status = $"No match: {url}";
+        ShowNotification("AutoBrowser", $"No rule matched and no fallback browser set.\n{url}");
+    }
+
+    private static void ShowNotification(string title, string message)
+    {
+        try
+        {
+            using var icon = new System.Windows.Forms.NotifyIcon
+            {
+                Icon = System.Drawing.Icon.ExtractAssociatedIcon(
+                    Environment.ProcessPath ?? ""),
+                Visible = true
+            };
+            icon.ShowBalloonTip(3000, title, message,
+                System.Windows.Forms.ToolTipIcon.Warning);
+        }
+        catch { }
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)

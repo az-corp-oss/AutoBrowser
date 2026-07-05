@@ -18,7 +18,7 @@ public partial class App : System.Windows.Application
         Directory.CreateDirectory(logDir);
 
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
+            .MinimumLevel.Verbose()
             .WriteTo.Console(
                 outputTemplate: "[{Timestamp:HH:mm:ss.fff}] [{Level:u3}] {Message:lj}{NewLine}{Exception}")
             .WriteTo.File(
@@ -69,13 +69,15 @@ public partial class App : System.Windows.Application
                 Log.Information("Routing URL via UrlInterceptorService");
                 var interceptor = new UrlInterceptorService(
                     new RuleService(), new DefaultBrowserService());
-                if (interceptor.TryRoute(url))
+                var fallbackPath = _settingsService?.LoadSettings()?.FallbackBrowserPath;
+                if (interceptor.TryRoute(url, fallbackPath))
                 {
                     Log.Debug("URL routed successfully, shutting down");
                     Shutdown();
                     return;
                 }
-                Log.Debug("URL routing failed, continuing to main window");
+                Log.Debug("No match for URL, showing notification and continuing to main window");
+                ShowNotification("AutoBrowser", $"No rule matched and no fallback browser set.\n{url}");
             }
         }
 
@@ -90,7 +92,7 @@ public partial class App : System.Windows.Application
         }
         Log.Information("Single instance mutex acquired");
 
-        var settings = _settingsService.LoadSettings();
+        var settings = _settingsService?.LoadSettings() ?? new AppSettings();
         Log.Debug("Settings loaded, theme: {Theme}", settings.ThemeMode);
         ApplyTheme(settings.ThemeMode);
 
@@ -115,5 +117,21 @@ public partial class App : System.Windows.Application
         Log.Information("OnExit (exit code: {ExitCode})", e.ApplicationExitCode);
         Log.CloseAndFlush();
         base.OnExit(e);
+    }
+
+    private static void ShowNotification(string title, string message)
+    {
+        try
+        {
+            using var icon = new System.Windows.Forms.NotifyIcon
+            {
+                Icon = System.Drawing.Icon.ExtractAssociatedIcon(
+                    Environment.ProcessPath ?? ""),
+                Visible = true
+            };
+            icon.ShowBalloonTip(3000, title, message,
+                System.Windows.Forms.ToolTipIcon.Warning);
+        }
+        catch { }
     }
 }

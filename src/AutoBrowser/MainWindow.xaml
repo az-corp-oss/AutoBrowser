@@ -22,6 +22,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <ui:TitleBar Grid.Row="0" Title="AutoBrowser - URL Router" Icon="/app.ico"/>
@@ -111,8 +112,23 @@
             </StackPanel>
         </Grid>
 
+        <!-- Fallback browser -->
+        <Border Grid.Row="2" Margin="8,0,8,4" Padding="8,4"
+                Background="{DynamicResource CardBackgroundBrush}"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1" CornerRadius="4">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Fallback browser:" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                <ComboBox ItemsSource="{Binding AvailableBrowsers}"
+                             SelectedItem="{Binding FallbackBrowser}"
+                             DisplayMemberPath="DisplayName"
+                             Width="250" HorizontalAlignment="Left"/>
+            </StackPanel>
+        </Border>
+
         <!-- Status bar -->
-        <Border Grid.Row="2" Margin="8,0,8,8" Padding="8,4"
+        <Border Grid.Row="3" Margin="8,0,8,8" Padding="8,4"
                 Background="{DynamicResource ControlFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                 BorderThickness="1" CornerRadius="4">

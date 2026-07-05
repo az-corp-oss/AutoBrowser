@@ -16,7 +16,7 @@ public class UrlInterceptorService
         _defaultBrowserService = defaultBrowserService;
     }
 
-    public bool TryRoute(string url)
+    public bool TryRoute(string url, string? fallbackBrowserPath = null)
     {
         Log.Information("TryRoute called with URL: {Url}", url);
 
@@ -52,17 +52,15 @@ public class UrlInterceptorService
             return true;
         }
 
-        Log.Verbose("No rules matched, checking default browser");
-        var savedDefault = _defaultBrowserService.GetSavedDefaultBrowser();
-        if (savedDefault is not null && File.Exists(savedDefault))
+        Log.Verbose("No rules matched, checking fallback browser");
+        if (!string.IsNullOrEmpty(fallbackBrowserPath) && File.Exists(fallbackBrowserPath))
         {
-            Log.Verbose("Using saved default browser: {BrowserPath}", savedDefault);
-            LaunchBrowser(savedDefault, "{url}", url);
+            Log.Verbose("Using selected fallback browser: {BrowserPath}", fallbackBrowserPath);
+            LaunchBrowser(fallbackBrowserPath, "{url}", url);
         }
         else
         {
-            Log.Verbose("No saved default browser, opening in system default");
-            OpenInDefaultBrowser(url);
+            Log.Information("No rules matched and no fallback browser set for URL: {Url}", url);
         }
 
         Log.Information("TryRoute completed: false (no rules matched)");
