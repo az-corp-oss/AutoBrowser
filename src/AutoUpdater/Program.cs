@@ -27,7 +27,7 @@ internal static class Program
         // Configure Serilog - logs in same directory as the app
         var logDir = Path.Combine(appDirForLog, "Logs");
         Directory.CreateDirectory(logDir);
-        var logPath = Path.Combine(logDir, "updater-.log");
+        var logPath = Path.Combine(logDir, "Updater-.log");
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
