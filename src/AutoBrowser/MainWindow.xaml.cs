@@ -28,15 +28,16 @@ public partial class MainWindow : FluentWindow
         var interceptor = new UrlInterceptorService(
             new RuleService(), new DefaultBrowserService());
         var fallbackPath = _viewModel.FallbackBrowser?.ExecutablePath;
-        if (interceptor.TryRoute(url, fallbackPath))
+        var browser = interceptor.TryRoute(url, fallbackPath);
+        if (browser is not null)
         {
             if (IsLoaded)
-                _viewModel.Status = $"Routed: {url}";
+                _viewModel.Status = $"Routed via {browser}: {url}";
             return;
         }
 
         _viewModel.Status = $"No match: {url}";
-        ShowNotification("AutoBrowser", $"No rule matched and no fallback browser set.\n{url}");
+        ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
     }
 
     private static void ShowNotification(string title, string message)

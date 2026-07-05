@@ -83,7 +83,7 @@ public class RuleService : IRuleService
                 UrlPattern = @"(teams|office|sharepoint|outlook|microsoft)\.com",
                 BrowserPath = edge.ExecutablePath,
                 BrowserArguments = edge.ArgumentsTemplate,
-                Priority = 1
+                Sequence = 1
             });
         }
 
@@ -95,7 +95,7 @@ public class RuleService : IRuleService
                 UrlPattern = @"(youtube|reddit|twitter|x\.com|instagram|facebook)\.com",
                 BrowserPath = chrome.ExecutablePath,
                 BrowserArguments = chrome.ArgumentsTemplate,
-                Priority = 2
+                Sequence = 2
             });
         }
 
@@ -105,7 +105,7 @@ public class RuleService : IRuleService
             UrlPattern = @"(github|gitlab|stackoverflow|npmjs|docker)\.(com|io)",
             BrowserPath = chrome?.ExecutablePath ?? edge?.ExecutablePath ?? "",
             BrowserArguments = chrome?.ArgumentsTemplate ?? edge?.ArgumentsTemplate ?? "{url}",
-            Priority = 3
+            Sequence = 3
         });
 
         return rules;

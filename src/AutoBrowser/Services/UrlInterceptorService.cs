@@ -16,15 +16,15 @@ public class UrlInterceptorService
         _defaultBrowserService = defaultBrowserService;
     }
 
-    public bool TryRoute(string url, string? fallbackBrowserPath = null)
+    public string? TryRoute(string url, string? fallbackBrowserPath = null)
     {
         Log.Information("TryRoute called with URL: {Url}", url);
 
         if (string.IsNullOrWhiteSpace(url))
         {
-            Log.Verbose("URL is null or whitespace, returning false");
-            Log.Information("TryRoute completed: false (null/whitespace URL)");
-            return false;
+            Log.Verbose("URL is null or whitespace, returning null");
+            Log.Information("TryRoute completed: null (null/whitespace URL)");
+            return null;
         }
 
         url = url.Trim();
@@ -32,14 +32,14 @@ public class UrlInterceptorService
 
         var rules = _ruleService.LoadRules()
             .Where(r => r.IsEnabled)
-            .OrderBy(r => r.Priority)
+            .OrderBy(r => r.Sequence)
             .ToList();
 
         Log.Debug("Loaded {Count} enabled rules", rules.Count);
 
         foreach (var rule in rules)
         {
-            Log.Verbose("Checking rule '{RuleName}' (Priority: {Priority}, Pattern: {Pattern})", rule.Name, rule.Priority, rule.UrlPattern);
+            Log.Verbose("Checking rule '{RuleName}' (Sequence: {Sequence}, Pattern: {Pattern})", rule.Name, rule.Sequence, rule.UrlPattern);
             if (!rule.IsMatch(url))
             {
                 Log.Verbose("Rule '{RuleName}' does not match", rule.Name);
@@ -48,8 +48,8 @@ public class UrlInterceptorService
 
             Log.Verbose("Rule '{RuleName}' matched, launching browser: {BrowserPath}", rule.Name, rule.BrowserPath);
             LaunchBrowser(rule.BrowserPath, rule.BrowserArguments, url);
-            Log.Information("TryRoute completed: true (matched rule: {RuleName})", rule.Name);
-            return true;
+            Log.Information("TryRoute completed: {Browser} (matched rule: {RuleName})", rule.BrowserDisplayName, rule.Name);
+            return rule.BrowserDisplayName;
         }
 
         Log.Verbose("No rules matched, checking fallback browser");
@@ -57,14 +57,14 @@ public class UrlInterceptorService
         {
             Log.Verbose("Using selected fallback browser: {BrowserPath}", fallbackBrowserPath);
             LaunchBrowser(fallbackBrowserPath, "{url}", url);
-        }
-        else
-        {
-            Log.Information("No rules matched and no fallback browser set for URL: {Url}", url);
+            var displayName = ResolveBrowserDisplayName(fallbackBrowserPath);
+            Log.Information("TryRoute completed: {Browser} (fallback)", displayName);
+            return displayName;
         }
 
-        Log.Information("TryRoute completed: false (no rules matched)");
-        return false;
+        Log.Information("No rules matched and no fallback browser set for URL: {Url}", url);
+        Log.Information("TryRoute completed: null (no rules matched)");
+        return null;
     }
 
     private static string StripProtocolPrefix(string url)
@@ -147,6 +147,14 @@ public class UrlInterceptorService
         var isFirefox = fileName.Equals("firefox", StringComparison.OrdinalIgnoreCase);
         Log.Verbose("IsFirefox result: {IsFirefox} (FileName: {FileName})", isFirefox, fileName);
         return isFirefox;
+    }
+
+    private static string ResolveBrowserDisplayName(string browserPath)
+    {
+        var known = BrowserDefinition.GetKnownBrowsers();
+        var match = known.FirstOrDefault(b =>
+            b.ExecutablePath.Equals(browserPath, StringComparison.OrdinalIgnoreCase));
+        return match?.DisplayName ?? Path.GetFileNameWithoutExtension(browserPath);
     }
 
     private static void OpenInDefaultBrowser(string url)

@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace AutoBrowser.Models;
@@ -9,7 +10,22 @@ public class RoutingRule
     public string BrowserPath { get; set; } = string.Empty;
     public string BrowserArguments { get; set; } = string.Empty;
     public bool IsEnabled { get; set; } = true;
-    public int Priority { get; set; }
+    public int Sequence { get; set; }
+
+    public string BrowserDisplayName
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(BrowserPath))
+                return string.Empty;
+
+            var fileName = Path.GetFileNameWithoutExtension(BrowserPath);
+            var known = BrowserDefinition.GetKnownBrowsers();
+            var match = known.FirstOrDefault(b =>
+                b.ExecutablePath.Equals(BrowserPath, StringComparison.OrdinalIgnoreCase));
+            return match?.DisplayName ?? fileName;
+        }
+    }
 
     public bool IsMatch(string url)
     {

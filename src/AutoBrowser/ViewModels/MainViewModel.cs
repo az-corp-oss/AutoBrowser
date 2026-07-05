@@ -336,12 +336,13 @@ public class MainViewModel : INotifyPropertyChanged
         if (string.IsNullOrWhiteSpace(url)) return;
 
         var interceptor = new UrlInterceptorService(_ruleService, _defaultBrowserService);
-        if (interceptor.TryRoute(url, FallbackBrowser?.ExecutablePath))
-            Status = $"Routed: {url}";
+        var browser = interceptor.TryRoute(url, FallbackBrowser?.ExecutablePath);
+        if (browser is not null)
+            Status = $"Routed via {browser}: {url}";
         else
         {
             Status = $"No match: {url}";
-            ShowNotification("AutoBrowser", $"No rule matched and no fallback browser set.\n{url}");
+            ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
         }
     }
 

@@ -70,14 +70,15 @@ public partial class App : System.Windows.Application
                 var interceptor = new UrlInterceptorService(
                     new RuleService(), new DefaultBrowserService());
                 var fallbackPath = _settingsService?.LoadSettings()?.FallbackBrowserPath;
-                if (interceptor.TryRoute(url, fallbackPath))
+                var browser = interceptor.TryRoute(url, fallbackPath);
+                if (browser is not null)
                 {
-                    Log.Debug("URL routed successfully, shutting down");
+                    Log.Debug("URL routed via {Browser}, shutting down", browser);
                     Shutdown();
                     return;
                 }
                 Log.Debug("No match for URL, showing notification and continuing to main window");
-                ShowNotification("AutoBrowser", $"No rule matched and no fallback browser set.\n{url}");
+                ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
             }
         }
 

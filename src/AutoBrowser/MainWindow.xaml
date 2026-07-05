@@ -79,26 +79,54 @@
                          SelectedItem="{Binding SelectedRule}"
                          SelectionMode="Single"
                          MouseDoubleClick="RuleListView_MouseDoubleClick">
-                <ui:ListView.View>
-                    <ui:GridView>
-                        <ui:GridViewColumn Header="Enabled" Width="60">
-                            <ui:GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <CheckBox IsChecked="{Binding IsEnabled}" Checked="CheckBox_Toggled" Unchecked="CheckBox_Toggled"
-                                              Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                </DataTemplate>
-                            </ui:GridViewColumn.CellTemplate>
-                        </ui:GridViewColumn>
-                        <ui:GridViewColumn Header="Priority" Width="60"
-                                           DisplayMemberBinding="{Binding Priority}"/>
-                        <ui:GridViewColumn Header="Name" Width="200"
-                                           DisplayMemberBinding="{Binding Name}"/>
-                        <ui:GridViewColumn Header="URL Pattern" Width="250"
-                                           DisplayMemberBinding="{Binding UrlPattern}"/>
-                        <ui:GridViewColumn Header="Browser" Width="250"
-                                           DisplayMemberBinding="{Binding BrowserPath}"/>
-                    </ui:GridView>
-                </ui:ListView.View>
+                <ui:ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="10,8" Margin="0,2"
+                                Background="{DynamicResource CardBackgroundBrush}"
+                                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                                BorderThickness="1" CornerRadius="6">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}"
+                                          Checked="CheckBox_Toggled" Unchecked="CheckBox_Toggled"
+                                          VerticalAlignment="Top" Margin="0,2,10,0"/>
+
+                                <StackPanel Grid.Column="1">
+                                    <!-- Row 1: Rule name + browser -->
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                        <TextBlock Text="  —  " Opacity="0.4"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding BrowserDisplayName}" Opacity="0.7"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                        <TextBlock Text="  —  " Opacity="0.4"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding BrowserPath}" Opacity="0.4"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                    </StackPanel>
+
+                                    <!-- Row 2: Sequence + pattern -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                        <Border Background="{DynamicResource ControlFillColorDefaultBrush}"
+                                                CornerRadius="3" Padding="5,1" Margin="0,0,6,0">
+                                            <TextBlock Text="{Binding Sequence, StringFormat='#{0}'}" FontSize="11"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding UrlPattern}" FontFamily="Consolas" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ui:ListView.ItemTemplate>
             </ui:ListView>
 
             <!-- Bottom-right registration checkboxes -->
