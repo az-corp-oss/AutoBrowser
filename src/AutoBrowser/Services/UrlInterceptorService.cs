@@ -95,43 +95,34 @@ public class UrlInterceptorService
     private static void LaunchBrowser(string browserPath, string argumentsTemplate, string url)
     {
         Log.Information("LaunchBrowser called - Path: {BrowserPath}, ArgsTemplate: {ArgsTemplate}, URL: {Url}", browserPath, argumentsTemplate, url);
-        try
-        {
-            var args = argumentsTemplate.Replace("{url}", url);
-            Log.Verbose("Initial args after URL replacement: {Args}", args);
+        var args = argumentsTemplate.Replace("{url}", url);
+        Log.Verbose("Initial args after URL replacement: {Args}", args);
 
-            if (IsFirefox(browserPath) && !args.Contains("-osint", StringComparison.OrdinalIgnoreCase))
-            {
-                args = $"-osint -url \"{url}\"";
-            }
-
-            if (IsEdge(browserPath))
-            {
-                Log.Verbose("Edge detected, using microsoft-edge protocol for tab reuse");
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = $"microsoft-edge:{url}",
-                    UseShellExecute = true
-                });
-            }
-            else
-            {
-                Log.Verbose("Starting process: {BrowserPath} {Args}", browserPath, args);
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = browserPath,
-                    Arguments = args,
-                    UseShellExecute = false
-                });
-            }
-            Log.Information("LaunchBrowser completed successfully");
-        }
-        catch (Exception ex)
+        if (IsFirefox(browserPath) && !args.Contains("-osint", StringComparison.OrdinalIgnoreCase))
         {
-            Log.Error(ex, "LaunchBrowser failed");
-            System.Windows.MessageBox.Show($"Failed to launch browser: {ex.Message}",
-                "AutoBrowser Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            args = $"-osint -url \"{url}\"";
         }
+
+        if (IsEdge(browserPath))
+        {
+            Log.Verbose("Edge detected, using microsoft-edge protocol for tab reuse");
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = $"microsoft-edge:{url}",
+                UseShellExecute = true
+            });
+        }
+        else
+        {
+            Log.Verbose("Starting process: {BrowserPath} {Args}", browserPath, args);
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = browserPath,
+                Arguments = args,
+                UseShellExecute = false
+            });
+        }
+        Log.Information("LaunchBrowser completed successfully");
     }
 
     private static bool IsEdge(string browserPath)
@@ -160,21 +151,12 @@ public class UrlInterceptorService
     private static void OpenInDefaultBrowser(string url)
     {
         Log.Information("OpenInDefaultBrowser called with URL: {Url}", url);
-        try
+        Log.Verbose("Opening URL with system default browser");
+        Process.Start(new ProcessStartInfo
         {
-            Log.Verbose("Opening URL with system default browser");
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = url,
-                UseShellExecute = true
-            });
-            Log.Information("OpenInDefaultBrowser completed successfully");
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "OpenInDefaultBrowser failed");
-            System.Windows.MessageBox.Show($"Failed to open URL: {ex.Message}",
-                "AutoBrowser Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-        }
+            FileName = url,
+            UseShellExecute = true
+        });
+        Log.Information("OpenInDefaultBrowser completed successfully");
     }
 }

@@ -66,6 +66,14 @@ public partial class RuleEditorView : FluentWindow
             return;
         }
 
+        var (isValid, error) = RoutingRule.ValidatePattern(PatternBox.Text.Trim());
+        if (!isValid)
+        {
+            System.Windows.MessageBox.Show(error, "Invalid URL Pattern",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
         Rule.Name = NameBox.Text.Trim();
         Rule.UrlPattern = PatternBox.Text.Trim();
         Rule.BrowserPath = BrowserPathBox.Text.Trim();

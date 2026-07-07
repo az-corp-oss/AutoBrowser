@@ -41,4 +41,20 @@ public class RoutingRule
             return url.Contains(UrlPattern, StringComparison.OrdinalIgnoreCase);
         }
     }
+
+    public static (bool IsValid, string? Error) ValidatePattern(string pattern)
+    {
+        if (string.IsNullOrWhiteSpace(pattern))
+            return (false, "URL pattern is required");
+
+        try
+        {
+            _ = new Regex(pattern);
+            return (true, null);
+        }
+        catch (RegexParseException ex)
+        {
+            return (false, $"Invalid regex: {ex.Message}");
+        }
+    }
 }
