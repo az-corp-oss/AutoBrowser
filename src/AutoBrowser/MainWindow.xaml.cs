@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using AutoBrowser.Models;
 using AutoBrowser.Services;
 using AutoBrowser.ViewModels;
 using Serilog;
@@ -10,6 +11,7 @@ namespace AutoBrowser;
 public partial class MainWindow : FluentWindow
 {
     private readonly MainViewModel _viewModel;
+    private readonly ISettingsService _settingsService;
     private System.Windows.Forms.NotifyIcon? _trayIcon;
     private bool _isExiting;
 
@@ -19,9 +21,12 @@ public partial class MainWindow : FluentWindow
 
         InitializeComponent();
         _viewModel = new MainViewModel();
+        _settingsService = new SettingsService();
         DataContext = _viewModel;
         Loaded += OnLoaded;
         Closing += OnClosing;
+
+        RestoreWindowState();
 
         Log.Debug("MainWindow initialized: MinimizeToTray={Minimize}, CloseToTray={Close}",
             _viewModel.MinimizeToTray, _viewModel.CloseToTray);
@@ -143,6 +148,7 @@ public partial class MainWindow : FluentWindow
 
     private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
+        SaveWindowState();
         _viewModel.SaveRules();
         Log.Debug("OnClosing: _isExiting={IsExiting}, CloseToTray={CloseToTray}",
             _isExiting, _viewModel.CloseToTray);
@@ -163,8 +169,56 @@ public partial class MainWindow : FluentWindow
     private void ExitApp()
     {
         Log.Information("ExitApp called from tray context menu");
+        SaveWindowState();
         _isExiting = true;
         _trayIcon?.Dispose();
         System.Windows.Application.Current.Shutdown();
+    }
+
+    private void RestoreWindowState()
+    {
+        var settings = _settingsService.LoadSettings();
+
+        Width = settings.WindowWidth;
+        Height = settings.WindowHeight;
+
+        if (settings.WindowLeft >= 0 && settings.WindowTop >= 0)
+        {
+            Left = settings.WindowLeft;
+            Top = settings.WindowTop;
+            WindowStartupLocation = WindowStartupLocation.Manual;
+        }
+
+        if (settings.IsMaximized)
+            WindowState = WindowState.Maximized;
+
+        Log.Debug("Window state restored: {Width}x{Height} at ({Left},{Top}), Maximized={Maximized}",
+            Width, Height, Left, Top, settings.IsMaximized);
+    }
+
+    private void SaveWindowState()
+    {
+        var settings = _settingsService.LoadSettings();
+
+        if (WindowState == WindowState.Maximized)
+        {
+            settings.IsMaximized = true;
+            settings.WindowLeft = RestoreBounds.Left;
+            settings.WindowTop = RestoreBounds.Top;
+            settings.WindowWidth = RestoreBounds.Width;
+            settings.WindowHeight = RestoreBounds.Height;
+        }
+        else
+        {
+            settings.IsMaximized = false;
+            settings.WindowLeft = Left;
+            settings.WindowTop = Top;
+            settings.WindowWidth = Width;
+            settings.WindowHeight = Height;
+        }
+
+        _settingsService.SaveSettings(settings);
+        Log.Debug("Window state saved: {Width}x{Height} at ({Left},{Top}), Maximized={Maximized}",
+            settings.WindowWidth, settings.WindowHeight, settings.WindowLeft, settings.WindowTop, settings.IsMaximized);
     }
 }
