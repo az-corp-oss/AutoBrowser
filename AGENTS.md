@@ -41,24 +41,33 @@ When adding logs to methods, follow this level hierarchy:
 
 ```
 src/AutoBrowser/
-├── App.xaml / .cs           # Entry point, theme apply, single-instance mutex
-├── MainWindow.xaml / .cs    # Main UI, tray icon
+├── App.xaml / .cs           # Entry point, theme apply, single-instance mutex, pipe server
+├── MainWindow.xaml / .cs    # Main UI, tray icon, re-register prompt
+├── AssemblyInfo.cs          # Assembly metadata
+├── Helpers/
+│   └── WindowForegroundHelper.cs  # Win32 P/Invoke for foreground window
 ├── Models/
-│   ├── AppSettings.cs       # Persisted settings (ThemeMode)
+│   ├── AppSettings.cs       # Persisted settings (ThemeMode, LastUpdateCheckTime)
 │   ├── AppThemeMode.cs      # Light/Dark enum
 │   ├── RoutingRule.cs       # Rule model
-│   └── BrowserDefinition.cs # Browser detection
+│   └── BrowserDefinition.cs # Browser detection from filesystem/registry
 ├── Services/
+│   ├── IRuleService.cs      # Rule service interface
 │   ├── RuleService.cs       # Rule JSON persistence + auto-merge
+│   ├── ISettingsService.cs  # Settings service interface
 │   ├── SettingsService.cs   # Settings JSON persistence
-│   ├── ProtocolService.cs   # autobrowser:// registry ops
-│   ├── DefaultBrowserService.cs  # Default browser registration
+│   ├── IProtocolService.cs  # Protocol service interface
+│   ├── ProtocolService.cs   # autobrowser:// registry ops + path check
+│   ├── IDefaultBrowserService.cs  # Default browser interface
+│   ├── DefaultBrowserService.cs   # Default browser registration + path check
+│   ├── IUpdateService.cs    # (if present)
+│   ├── UpdateService.cs     # Auto-update from GitHub releases
 │   └── UrlInterceptorService.cs  # URL matching + browser launch
-└── ViewModels/
-    ├── MainViewModel.cs     # Commands, IsDarkTheme, Status, bindings
-    ├── RelayCommand.cs      # ICommand impl
-    ├── RuleDialog.xaml / .cs    # Add/Edit rule
-    └── InputDialog.xaml / .cs   # Test URL input
+├── ViewModels/
+│   └── MainViewModel.cs     # Commands, IsDarkTheme, Status, update throttling
+└── Views/
+    ├── RuleEditorView.xaml / .cs    # Add/Edit rule dialog
+    └── RuleTesterView.xaml / .cs    # Test URL input dialog
 ```
 
 ## Serena Memories
@@ -100,13 +109,33 @@ After **any** code or XAML change, run this sequence to confirm the app starts w
 
 0. Tests: `dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj`
 1. Build: `dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging`
-2. Launch, wait 5s, close:
+2. Launch, wait 15s, close:
    ```powershell
-   $proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 10; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+   $proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 15; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
    ```
 3. Check the log at `bin\staging\Logs/` for any `[ERR]` entries.
+4. **Test re-register prompt** — simulate moved app by changing registry, launch, verify prompt, restore:
+   ```powershell
+   # Read current path
+   $regPath = "HKCU:\Software\Classes\AutoBrowserLink\shell\open\command"
+   $original = (Get-ItemProperty -Path $regPath -Name "(default)")."(default)"
+
+   # Fake old path to trigger prompt
+   Set-ItemProperty -Path $regPath -Name "(default)" -Value '"C:\OldLocation\AutoBrowser.exe" "%1"'
+
+   # Launch and capture — user should see the dialog
+   $proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 15; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+
+   # Restore original path
+   Set-ItemProperty -Path $regPath -Name "(default)" -Value $original
+
+   # Verify log shows re-register was triggered
+   Get-ChildItem "bin\staging\Logs\" -Filter "*.log" | Sort-Object LastWriteTime -Descending | Select-Object -First 1 | ForEach-Object { Get-Content $_.FullName | Select-String "App path has changed" }
+   ```
 
 If tests fail or the app fails to launch or throws an error, fix it before proceeding.
+
+**Note**: Use WPF UI `MessageBox` with `ShowDialogAsync()` instead of `System.Windows.MessageBox` to prevent title bar movement issues.
 
 ## Git Rules — CRITICAL
 

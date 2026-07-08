@@ -10,7 +10,9 @@ A Windows desktop app that routes URLs to user-configured browsers based on rege
 - **Default Browser Mode** — Optionally register as the system default browser to intercept all HTTP(S) links
 - **Infinite-Loop Protection** — Unmatched URLs launch the previous default browser directly by EXE path, not via shell association
 - **Fallback Browser** — Configurable fallback browser for unmatched URLs
-- **Auto-Update** — Check for updates from GitHub releases, download and apply with automatic backup/restore
+- **Auto-Update** — Check for updates from GitHub releases, download and apply with automatic backup/restore (throttled to once per hour)
+- **Single Instance** — Only one instance runs at a time; launching another brings the existing window to front (via named pipe IPC)
+- **Re-Register Prompt** — Automatically detects when the app has been moved and prompts to re-register protocol/default browser with the new path
 - **System Tray** — Minimize to tray and/or close to tray (independently configurable)
 - **Dark Mode** — Toggle Dark/Light theme
 - **Portable** — All data stored in `Data/` folder next to the executable
@@ -31,7 +33,7 @@ Download from [Releases](https://github.com/azhe403/AutoBrowser/releases):
 
 Extract and run `AutoBrowser.exe`.
 
-> **Portable**: If you move the folder to another location, just re-tick both checkboxes in the toolbar (`autobrowser:// protocol` and `Registered as default browser`) to update the registry with the new path. Old entries are automatically cleaned up.
+> **Portable**: If you move the folder to another location, AutoBrowser will automatically detect the path change and prompt you to re-register. You can also manually re-tick the toolbar checkboxes.
 
 ## Usage
 

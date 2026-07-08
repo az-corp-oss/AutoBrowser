@@ -19,12 +19,35 @@
 ## Update Check
 - **Button**: "Check Update" in toolbar, bound to `CheckForUpdateCommand`, disabled while checking/downloading
 - **Auto-check**: `_ = CheckForUpdateSilentAsync()` runs on startup, silently ignores no-update/offline
+- **Throttled**: Checks once per hour via `LastUpdateCheckTime` in settings
 - **Dialog**: `Wpf.Ui.Controls.MessageBox` (500px wide) with Yes/No — no third Cancel button
 - **Silent flow**: fires `ShowUpdateDialogAsync` only when newer version found
 - **Manual flow**: shows status for checking/up-to-date/failed, then delegates to `ShowUpdateDialogAsync`
 
-$1
-- **Verify compilation (app running)**: `dotnet build AutoBrowser\AutoBrowser.csproj -o AutoBrowser\bin\Debug\net10.0-windows_staging` — does NOT kill the running app, output goes to `_staging` folder
-- **Full build (kills app)**: `dotnet build` — only when intentionally overwriting the running binary
-- **Run**: `dotnet run` or run exe directly
-- **Post-change ritual**: verify with `_staging` first (no kill), then exit app and run fresh copy
+## Single Instance
+- Named pipe IPC (`System.IO.Pipes`) for single-instance signaling
+- `SingleInstanceService` manages pipe server in background `Task.Run` loop
+- Protocol: `"SHOW"` or `"SHOW|<url>"` — brings existing window to front
+- `WindowForegroundHelper` uses Win32 P/Invoke (`SetForegroundWindow`, `ShowWindow`)
+- `MainWindow.ActivateFromTray(url)` restores window and processes forwarded URL
+
+## Re-Register Prompt
+- On startup, compares registered protocol/default browser paths with `Environment.ProcessPath`
+- If path differs (app was moved), shows WPF UI `MessageBox` with old/new paths
+- Uses `ShowDialogAsync()` (async) with owner set to MainWindow
+- Yes: unregisters and re-registers both handlers, shows notification
+- No: logs decline, continues normally
+
+### Testing Re-Register Prompt
+- Save current path: `(Get-ItemProperty -Path $regPath -Name "(default)")."(default)"`
+- Fake old path: `Set-ItemProperty ... "C:\OldLocation\AutoBrowser.exe"`
+- Launch app → dialog should appear
+- Restore original path
+- Verify log shows `"App path has changed"`
+
+## Build & Run
+- **Verify compilation (app running)**: `dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging` — does NOT kill the running app
+- **Full build (kills app)**: `dotnet build src\AutoBrowser\AutoBrowser.csproj` — only when intentionally overwriting the running binary
+- **Run**: `dotnet run --project src\AutoBrowser\AutoBrowser.csproj` or run EXE directly
+- **Post-change ritual**: verify with `bin\staging` first (no kill), then exit app and run fresh copy
+- **Tests**: `dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj` (38 tests)

@@ -41,6 +41,7 @@ $1
 - (Default) = `URL:AutoBrowser Protocol`, `URL Protocol` = `""`
 - Command: `shell\open\command` = `"path\to\AutoBrowser.exe" "%1"`
 - Toggle checkbox in toolbar, no admin needed
+- **Path check**: `GetRegisteredPath()` reads current registered exe path for re-register prompt
 
 ### Default Browser
 - `HKCU\Software\RegisteredApplications` → `AutoBrowser` = `Software\AutoBrowser\Capabilities`
@@ -48,3 +49,10 @@ $1
 - Before registering: saves current default EXE to `Data/default_browser.txt`
 - On unregister: deletes that file
 - Silent toggle — no message box shown (user selects AutoBrowser in Settings > Default Apps if they want)
+- **Path check**: `GetRegisteredPath()` reads current registered exe path for re-register prompt
+
+## Re-Register Prompt
+- On startup, `CheckAndPromptReRegister()` compares registered paths with `Environment.ProcessPath`
+- If path differs (app was moved), shows MessageBox with old/new paths and Yes/No to re-register
+- On Yes: unregisters and re-registers both protocol and default browser
+- On No: logs decline, continues normally
