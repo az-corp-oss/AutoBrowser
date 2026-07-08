@@ -8,11 +8,82 @@ namespace AutoBrowser;
 
 public partial class App : System.Windows.Application
 {
-    private static readonly string MutexName = "AutoBrowser-SingleInstance";
-    private ISettingsService? _settingsService;
+    private const string MutexName = "AutoBrowser-SingleInstance";
+
+    private readonly ISettingsService _settingsService = new SettingsService();
+    private SingleInstanceService? _singleInstanceService;
+    private MainWindow? _mainWindow;
+    private System.Threading.Mutex? _mutex;
     public AppThemeMode CurrentThemeMode { get; private set; }
 
     protected override void OnStartup(System.Windows.StartupEventArgs e)
+    {
+        ConfigureLogging();
+        RegisterExceptionHandlers();
+
+        Log.Information("=== AutoBrowser Started ===");
+        Log.Debug("OS: {OS}", Environment.OSVersion);
+        Log.Debug("CLR: {CLR}", Environment.Version);
+        Log.Debug("64-bit: {Is64Bit}", Environment.Is64BitProcess);
+        Log.Debug("Path: {Path}", Environment.ProcessPath);
+        Log.Debug("Args: {Args}", string.Join(" ", e.Args));
+
+        base.OnStartup(e);
+
+        // Extract URL arg once — used for early routing and later pipe signaling
+        var urlArg = e.Args.Length > 0 ? e.Args[0] : null;
+        if (IsUrl(urlArg))
+        {
+            Log.Debug("URL argument received: {Url}", urlArg);
+            if (TryRouteUrl(urlArg!))
+            {
+                Shutdown();
+                return;
+            }
+        }
+
+        // Single-instance guard: if already running, signal it and exit
+        _mutex = new System.Threading.Mutex(true, MutexName, out var isNewInstance);
+        if (!isNewInstance)
+        {
+            Log.Information("Another instance detected, signaling via pipe");
+            SingleInstanceService.SignalExistingInstance(urlArg);
+            _mutex.Dispose();
+            _mutex = null;
+            Shutdown();
+            return;
+        }
+        Log.Information("Single instance mutex acquired");
+
+        ApplyTheme(_settingsService.LoadSettings().ThemeMode);
+        ShowMainWindow();
+        StartPipeServer();
+    }
+
+    public void ApplyTheme(AppThemeMode mode)
+    {
+        Log.Debug("Applying theme: {Theme}", mode);
+        var theme = mode == AppThemeMode.Dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+        ApplicationThemeManager.Apply(theme);
+        CurrentThemeMode = mode;
+
+        var settings = _settingsService.LoadSettings();
+        settings.ThemeMode = mode;
+        _settingsService.SaveSettings(settings);
+    }
+
+    protected override void OnExit(System.Windows.ExitEventArgs e)
+    {
+        Log.Information("OnExit (exit code: {ExitCode})", e.ApplicationExitCode);
+        _singleInstanceService?.Dispose();
+        _mutex?.Dispose();
+        Log.CloseAndFlush();
+        base.OnExit(e);
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────
+
+    private void ConfigureLogging()
     {
         var logDir = Path.Combine(AppContext.BaseDirectory, "Logs");
         Directory.CreateDirectory(logDir);
@@ -28,7 +99,10 @@ public partial class App : System.Windows.Application
                 outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}] [{Level:u3}] {Message:lj}{NewLine}{Exception}",
                 retainedFileCountLimit: 14)
             .CreateLogger();
+    }
 
+    private void RegisterExceptionHandlers()
+    {
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
         {
             if (args.ExceptionObject is Exception ex)
@@ -47,83 +121,55 @@ public partial class App : System.Windows.Application
             Log.Error(args.Exception, "UnobservedTaskException");
             args.SetObserved();
         };
+    }
 
-        Log.Information("=== AutoBrowser Started ===");
-        Log.Debug("OS: {OS}", Environment.OSVersion);
-        Log.Debug("CLR: {CLR}", Environment.Version);
-        Log.Debug("64-bit: {Is64Bit}", Environment.Is64BitProcess);
-        Log.Debug("Path: {Path}", Environment.ProcessPath);
-        Log.Debug("Args: {Args}", string.Join(" ", e.Args));
+    private static bool IsUrl(string? value) =>
+        value is not null
+        && (value.StartsWith("autobrowser:", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
 
-        base.OnStartup(e);
+    /// <summary>
+    /// Attempts to route a URL via rules without opening the UI.
+    /// Returns <c>true</c> if the URL was matched and routed.
+    /// </summary>
+    private bool TryRouteUrl(string url)
+    {
+        Log.Information("Routing URL via UrlInterceptorService");
+        var interceptor = new UrlInterceptorService(new RuleService(), new DefaultBrowserService());
+        var fallbackPath = _settingsService.LoadSettings().FallbackBrowserPath;
+        var browser = interceptor.TryRoute(url, fallbackPath);
 
-        _settingsService = new SettingsService();
-
-        if (e.Args.Length > 0)
+        if (browser is not null)
         {
-            var url = e.Args[0];
-            Log.Debug("URL argument received: {Url}", url);
-            if (url.StartsWith("autobrowser:", StringComparison.OrdinalIgnoreCase)
-                || url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-                || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            {
-                Log.Information("Routing URL via UrlInterceptorService");
-                var interceptor = new UrlInterceptorService(
-                    new RuleService(), new DefaultBrowserService());
-                var fallbackPath = _settingsService?.LoadSettings()?.FallbackBrowserPath;
-                var browser = interceptor.TryRoute(url, fallbackPath);
-                if (browser is not null)
-                {
-                    Log.Debug("URL routed via {Browser}, shutting down", browser);
-                    Shutdown();
-                    return;
-                }
-                Log.Debug("No match for URL, showing notification and continuing to main window");
-                ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
-            }
+            Log.Debug("URL routed via {Browser}, shutting down", browser);
+            ShowNotification("AutoBrowser", $"Routed via {browser}:\n{url}");
+            return true;
         }
 
-        using var mutex = new System.Threading.Mutex(true, MutexName, out var isNewInstance);
-        if (!isNewInstance)
-        {
-            Log.Debug("Another instance already running, shutting down");
-            System.Windows.MessageBox.Show("AutoBrowser is already running in the system tray.",
-                "AutoBrowser", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-            Shutdown();
-            return;
-        }
-        Log.Information("Single instance mutex acquired");
+        Log.Debug("No match for URL, showing notification and continuing to main window");
+        ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
+        return false;
+    }
 
-        var settings = _settingsService?.LoadSettings() ?? new AppSettings();
-        Log.Debug("Settings loaded, theme: {Theme}", settings.ThemeMode);
-        ApplyTheme(settings.ThemeMode);
-
+    private void ShowMainWindow()
+    {
         Log.Information("Creating MainWindow");
-        var mainWindow = new MainWindow();
-        mainWindow.Show();
+        _mainWindow = new MainWindow();
+        _mainWindow.Show();
         Log.Information("MainWindow shown");
     }
 
-    public void ApplyTheme(AppThemeMode mode)
+    private void StartPipeServer()
     {
-        Log.Debug("Applying theme: {Theme}", mode);
-        var theme = mode == AppThemeMode.Dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
-
-        ApplicationThemeManager.Apply(theme);
-        CurrentThemeMode = mode;
-        if (_settingsService is not null)
-        {
-            var settings = _settingsService.LoadSettings();
-            settings.ThemeMode = mode;
-            _settingsService.SaveSettings(settings);
-        }
-    }
-
-    protected override void OnExit(System.Windows.ExitEventArgs e)
-    {
-        Log.Information("OnExit (exit code: {ExitCode})", e.ApplicationExitCode);
-        Log.CloseAndFlush();
-        base.OnExit(e);
+        _singleInstanceService = new SingleInstanceService();
+        _singleInstanceService.StartServer(
+            url =>
+            {
+                Log.Information("Second instance requested activation, Url={Url}", url ?? "(none)");
+                _mainWindow?.ActivateFromTray(url);
+            },
+            Dispatcher);
     }
 
     private static void ShowNotification(string title, string message)
@@ -132,12 +178,10 @@ public partial class App : System.Windows.Application
         {
             using var icon = new System.Windows.Forms.NotifyIcon
             {
-                Icon = System.Drawing.Icon.ExtractAssociatedIcon(
-                    Environment.ProcessPath ?? ""),
+                Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? ""),
                 Visible = true
             };
-            icon.ShowBalloonTip(3000, title, message,
-                System.Windows.Forms.ToolTipIcon.Warning);
+            icon.ShowBalloonTip(3000, title, message, System.Windows.Forms.ToolTipIcon.Warning);
         }
         catch { }
     }

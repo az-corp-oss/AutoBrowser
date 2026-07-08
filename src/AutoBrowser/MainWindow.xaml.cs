@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using AutoBrowser.Helpers;
 using AutoBrowser.Models;
 using AutoBrowser.Services;
 using AutoBrowser.ViewModels;
@@ -43,6 +44,7 @@ public partial class MainWindow : FluentWindow
         if (browser is not null)
         {
             Log.Information("URL routed via {Browser}: {Url}", browser, url);
+            ShowNotification("AutoBrowser", $"Routed via {browser}:\n{url}");
             if (IsLoaded)
                 _viewModel.Status = $"Routed via {browser}: {url}";
             return;
@@ -78,6 +80,7 @@ public partial class MainWindow : FluentWindow
         Log.Debug("MainWindow loaded, setting up tray icon");
         SetupTrayIcon();
         _viewModel.StartSilentUpdateCheck();
+        CheckAndPromptReRegister();
 
         var args = Environment.GetCommandLineArgs();
         if (args.Length > 1)
@@ -126,6 +129,25 @@ public partial class MainWindow : FluentWindow
         WindowState = WindowState.Normal;
         Activate();
         Log.Debug("Window restored from tray");
+    }
+
+    /// <summary>
+    /// Called by the single-instance pipe server when a second instance is launched.
+    /// Brings this window to the foreground and optionally routes a URL.
+    /// </summary>
+    public void ActivateFromTray(string? url = null)
+    {
+        Log.Information("ActivateFromTray called, Url={Url}", url ?? "(none)");
+
+        WindowForegroundHelper.BringToFront(this);
+
+        if (!string.IsNullOrEmpty(url))
+        {
+            Log.Information("Processing forwarded URL: {Url}", url);
+            ProcessUrl(url);
+        }
+
+        Log.Debug("ActivateFromTray complete");
     }
 
     private void Window_StateChanged(object? sender, EventArgs e)
@@ -220,5 +242,107 @@ public partial class MainWindow : FluentWindow
         _settingsService.SaveSettings(settings);
         Log.Debug("Window state saved: {Width}x{Height} at ({Left},{Top}), Maximized={Maximized}",
             settings.WindowWidth, settings.WindowHeight, settings.WindowLeft, settings.WindowTop, settings.IsMaximized);
+    }
+
+    private async void CheckAndPromptReRegister()
+    {
+        Log.Information("CheckAndPromptReRegister called");
+
+        var currentPath = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(currentPath))
+        {
+            Log.Debug("Cannot determine current process path, skipping re-register check");
+            return;
+        }
+
+        var protocolService = new ProtocolService();
+        var defaultBrowserService = new DefaultBrowserService();
+
+        var needsReRegister = false;
+        var registrationType = string.Empty;
+
+        // Check autobrowser:// protocol registration
+        if (protocolService.IsProtocolRegistered())
+        {
+            var registeredPath = protocolService.GetRegisteredPath();
+            Log.Debug("Protocol registration: RegisteredPath={Registered}, CurrentPath={Current}",
+                registeredPath, currentPath);
+
+            if (!string.IsNullOrEmpty(registeredPath)
+                && !registeredPath.Equals(currentPath, StringComparison.OrdinalIgnoreCase))
+            {
+                needsReRegister = true;
+                registrationType = "autobrowser:// protocol handler";
+            }
+        }
+
+        // Check default browser registration
+        if (defaultBrowserService.IsDefaultBrowser())
+        {
+            var registeredPath = defaultBrowserService.GetRegisteredPath();
+            Log.Debug("Default browser registration: RegisteredPath={Registered}, CurrentPath={Current}",
+                registeredPath, currentPath);
+
+            if (!string.IsNullOrEmpty(registeredPath)
+                && !registeredPath.Equals(currentPath, StringComparison.OrdinalIgnoreCase))
+            {
+                needsReRegister = true;
+                registrationType = string.IsNullOrEmpty(registrationType)
+                    ? "system default browser"
+                    : registrationType + " and system default browser";
+            }
+        }
+
+        if (needsReRegister)
+        {
+            Log.Information("App path has changed, prompting user to re-register: {Type}", registrationType);
+
+            var oldProtocolPath = protocolService.IsProtocolRegistered() ? protocolService.GetRegisteredPath() : null;
+            var oldDefaultPath = defaultBrowserService.IsDefaultBrowser() ? defaultBrowserService.GetRegisteredPath() : null;
+            var oldPath = oldProtocolPath ?? oldDefaultPath ?? "(unknown)";
+
+            var dialog = new Wpf.Ui.Controls.MessageBox
+            {
+                Title = "AutoBrowser — Path Changed",
+                Content = $"AutoBrowser has been moved to a new location, but the {registrationType} still points to the old path.\n\n" +
+                          $"Old path: {oldPath}\n" +
+                          $"New path: {currentPath}\n\n" +
+                          "Would you like to re-register now?",
+                PrimaryButtonText = "Yes",
+                SecondaryButtonText = "No",
+                IsCloseButtonEnabled = false,
+                Width = 500,
+                MinWidth = 500
+            };
+            dialog.Owner = this;
+            var result = await dialog.ShowDialogAsync();
+
+            if (result == Wpf.Ui.Controls.MessageBoxResult.Primary)
+            {
+                if (registrationType.Contains("protocol"))
+                {
+                    protocolService.UnregisterProtocolHandler();
+                    protocolService.RegisterProtocolHandler();
+                    Log.Information("Protocol handler re-registered");
+                }
+                if (registrationType.Contains("default browser"))
+                {
+                    defaultBrowserService.UnregisterAsDefaultBrowser();
+                    defaultBrowserService.RegisterAsDefaultBrowser();
+                    Log.Information("Default browser registration updated");
+                }
+
+                ShowNotification("AutoBrowser", "Registration updated successfully.");
+                _viewModel.Status = "Registration updated to new path.";
+            }
+            else
+            {
+                Log.Debug("User declined re-registration");
+            }
+        }
+        else
+        {
+            Log.Debug("Registration paths are current, no re-registration needed");
+        }
     }
 }

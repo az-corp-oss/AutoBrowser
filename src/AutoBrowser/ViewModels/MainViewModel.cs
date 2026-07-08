@@ -150,6 +150,14 @@ public partial class MainViewModel : ObservableObject
 
     public void StartSilentUpdateCheck()
     {
+        var settings = _settingsService.LoadSettings();
+        var elapsed = DateTime.Now - settings.LastUpdateCheckTime;
+        if (elapsed < TimeSpan.FromHours(1))
+        {
+            Log.Debug("Silent update check skipped, last check was {Elapsed} ago", elapsed);
+            return;
+        }
+
         _ = CheckForUpdateSilentAsync();
     }
 
@@ -159,6 +167,11 @@ public partial class MainViewModel : ObservableObject
         {
             Log.Information("Silent update check starting");
             var release = await _updateService.CheckForUpdateAsync();
+
+            var settings = _settingsService.LoadSettings();
+            settings.LastUpdateCheckTime = DateTime.Now;
+            _settingsService.SaveSettings(settings);
+
             if (release is null || !release.IsNewer)
             {
                 Status = "App is up to date";
