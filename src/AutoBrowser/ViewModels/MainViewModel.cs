@@ -7,6 +7,7 @@ using AutoBrowser.Services;
 using AutoBrowser.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 namespace AutoBrowser.ViewModels;
@@ -63,6 +64,8 @@ public partial class MainViewModel : ObservableObject
     public string TrayLabel => (MinimizeToTray || CloseToTray) ? "Tray" : "Exit";
     public bool CanCheckForUpdate => !IsCheckingUpdate && !IsDownloadingUpdate;
     public bool HasSelectedRule => SelectedRule is not null;
+    public string AppVersion => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0.0";
+    public string WindowTitle => $"AutoBrowser v{AppVersion} - URL Router";
 
     public bool IsProtocolRegistered
     {
@@ -405,6 +408,26 @@ public partial class MainViewModel : ObservableObject
                 System.Windows.Forms.ToolTipIcon.Warning);
         }
         catch { }
+    }
+
+
+
+    [RelayCommand]
+    private void OpenUrl(string url)
+    {
+        try
+        {
+            Log.Information("Opening URL: {Url}", url);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to open URL: {Url}", url);
+        }
     }
 }
 
