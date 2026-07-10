@@ -6,7 +6,7 @@
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:views="clr-namespace:AutoBrowser.Views"
                  mc:Ignorable="d"
-                 Title="AutoBrowser - URL Router" Icon="/app.ico" Height="650" Width="950"
+                 Title="{Binding WindowTitle}" Icon="/app.ico" Height="730" Width="1040"
                  MinWidth="600" MinHeight="400"
                  ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
                  ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -15,35 +15,25 @@
                  WindowBackdropType="Mica"
                  WindowCornerPreference="Round"
                  WindowStartupLocation="CenterScreen">
-    <ui:FluentWindow.Resources>
-    </ui:FluentWindow.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="AutoBrowser - URL Router" Icon="/app.ico"/>
+        <ui:TitleBar Grid.Row="0" Title="{Binding WindowTitle}" Icon="/app.ico" />
 
-        <Grid Grid.Row="1" Margin="8">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <ui:NavigationView Grid.Row="1" x:Name="RootNavigation" PaneDisplayMode="LeftFluent">
+            <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem Content="Home" Icon="{ui:SymbolIcon Home24}" TargetPageType="{x:Type views:HomePage}"/>
+                <ui:NavigationViewItem Content="About" Icon="{ui:SymbolIcon Info24}" TargetPageType="{x:Type views:AboutPage}"/>
+            </ui:NavigationView.MenuItems>
+            <ui:NavigationView.FooterMenuItems>
+                <ui:NavigationViewItem Content="Settings" Icon="{ui:SymbolIcon Settings24}" TargetPageType="{x:Type views:SettingsPage}"/>
+            </ui:NavigationView.FooterMenuItems>
+        </ui:NavigationView>
 
-            <!-- Sliced: Toolbar -->
-            <views:ToolbarView Grid.Row="0" Margin="0,0,0,4"/>
-
-            <!-- Sliced: Rule list -->
-            <views:RulesListView Grid.Row="1"/>
-        </Grid>
-
-        <!-- Sliced: Fallback & Tray Settings -->
-        <views:FooterView Grid.Row="2" Margin="8,0,8,4"/>
-
-        <!-- Sliced: Status bar -->
-        <views:StatusControl Grid.Row="3" Margin="8,0,8,8"/>
+        <views:StatusControl Grid.Row="2" Margin="12,6,12,8"/>
     </Grid>
 </ui:FluentWindow>

@@ -1,15 +1,19 @@
 using Wpf.Ui.Controls;
-using Microsoft.Extensions.DependencyInjection;
+using Wpf.Ui.Abstractions;
 using AutoBrowser.ViewModels;
+using AutoBrowser.Views;
 
 namespace AutoBrowser;
 
 public partial class MainWindow : FluentWindow
 {
-    public MainWindow()
+    public MainWindow(INavigationViewPageProvider pageProvider, MainViewModel viewModel)
     {
         Wpf.Ui.Appearance.SystemThemeWatcher.Watch(this);
         InitializeComponent();
-        DataContext = App.Services.GetRequiredService<MainViewModel>();
+        DataContext = viewModel;
+
+        RootNavigation.SetPageProviderService(pageProvider);
+        Loaded += (s, e) => RootNavigation.Navigate(typeof(HomePage));
     }
 }
