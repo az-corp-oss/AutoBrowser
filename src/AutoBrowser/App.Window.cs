@@ -1,0 +1,131 @@
+using System;
+using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
+using AutoBrowser.ViewModels;
+using Serilog;
+
+namespace AutoBrowser;
+
+public partial class App
+{
+    private void ShowMainWindow()
+    {
+        Log.Information("Creating MainWindow");
+        _mainWindow = Services.GetRequiredService<MainWindow>();
+
+        _mainWindow.Loaded += MainWindow_Loaded;
+        _mainWindow.Closing += MainWindow_Closing;
+        _mainWindow.StateChanged += MainWindow_StateChanged;
+
+        RestoreWindowState();
+
+        _mainWindow.Show();
+        Log.Information("MainWindow shown");
+    }
+
+    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        Log.Debug("MainWindow loaded, setting up tray icon");
+        SetupTrayIcon();
+
+        var vm = Services.GetRequiredService<MainViewModel>();
+        await CheckAndPromptReRegister();
+
+        var args = Environment.GetCommandLineArgs();
+        var forceUpdate = Array.Exists(args, arg => arg.Equals("--force-update-check", StringComparison.OrdinalIgnoreCase));
+        await vm.StartSilentUpdateCheckAsync(forceUpdate);
+        if (args.Length > 1)
+        {
+            var url = args[1];
+            Log.Debug("Command-line URL argument: {Url}", url);
+            if (IsUrl(url))
+            {
+                ProcessUrl(url);
+            }
+            else
+            {
+                Log.Debug("Ignoring non-URL argument: {Url}", url);
+            }
+        }
+    }
+
+    private void MainWindow_StateChanged(object? sender, EventArgs e)
+    {
+        if (_mainWindow == null) return;
+        var vm = Services.GetRequiredService<MainViewModel>();
+        Log.Debug("Window_StateChanged: WindowState={WindowState}, MinimizeToTray={MinimizeToTray}",
+            _mainWindow.WindowState, vm.MinimizeToTray);
+        if (_mainWindow.WindowState == WindowState.Minimized && vm.MinimizeToTray)
+            _mainWindow.Hide();
+    }
+
+    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (_mainWindow == null) return;
+        var vm = Services.GetRequiredService<MainViewModel>();
+        SaveWindowState();
+        vm.SaveRules();
+        Log.Debug("MainWindow_Closing: _isExiting={IsExiting}, CloseToTray={CloseToTray}",
+            _isExiting, vm.CloseToTray);
+
+        if (!_isExiting && vm.CloseToTray)
+        {
+            e.Cancel = true;
+            _mainWindow.Hide();
+        }
+        else
+        {
+            _isExiting = true;
+            _trayIcon?.Dispose();
+        }
+    }
+
+    private void RestoreWindowState()
+    {
+        if (_mainWindow == null) return;
+        var settings = _settingsService.LoadSettings();
+
+        _mainWindow.Width = settings.WindowWidth;
+        _mainWindow.Height = settings.WindowHeight;
+
+        if (settings.WindowLeft >= 0 && settings.WindowTop >= 0)
+        {
+            _mainWindow.Left = settings.WindowLeft;
+            _mainWindow.Top = settings.WindowTop;
+            _mainWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+        }
+
+        if (settings.IsMaximized)
+            _mainWindow.WindowState = WindowState.Maximized;
+
+        Log.Debug("Window state restored: {Width}x{Height} at ({Left},{Top}), Maximized={Maximized}",
+            _mainWindow.Width, _mainWindow.Height, _mainWindow.Left, _mainWindow.Top, settings.IsMaximized);
+    }
+
+    private void SaveWindowState()
+    {
+        if (_mainWindow == null) return;
+        var settings = _settingsService.LoadSettings();
+
+        if (_mainWindow.WindowState == WindowState.Maximized)
+        {
+            settings.IsMaximized = true;
+            settings.WindowLeft = _mainWindow.RestoreBounds.Left;
+            settings.WindowTop = _mainWindow.RestoreBounds.Top;
+            settings.WindowWidth = _mainWindow.RestoreBounds.Width;
+            settings.WindowHeight = _mainWindow.RestoreBounds.Height;
+        }
+        else
+        {
+            settings.IsMaximized = false;
+            settings.WindowLeft = _mainWindow.Left;
+            settings.WindowTop = _mainWindow.Top;
+            settings.WindowWidth = _mainWindow.Width;
+            settings.WindowHeight = _mainWindow.Height;
+        }
+
+        _settingsService.SaveSettings(settings);
+        Log.Debug("Window state saved: {Width}x{Height} at ({Left},{Top}), Maximized={Maximized}",
+            settings.WindowWidth, settings.WindowHeight, settings.WindowLeft, settings.WindowTop, settings.IsMaximized);
+    }
+}
