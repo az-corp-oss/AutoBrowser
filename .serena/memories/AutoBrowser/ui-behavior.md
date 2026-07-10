@@ -1,7 +1,7 @@
 # AutoBrowser — UI & Behavior
 
 ## Theme Toggle
-- **Control**: `ui:ToggleSwitch` in toolbar, bound to `MainViewModel.IsDarkTheme` (bool)
+- **Control**: `ui:ToggleSwitch` in Settings Page, bound to `MainViewModel.IsDarkTheme` (bool)
 - **Enum**: `AppThemeMode` — `Light` (0), `Dark` (1) — `System` removed
 - **Default**: `Light`
 - **Flow**: `App.OnStartup` → loads settings → `ApplyTheme(mode)` → MainViewModel reads `App.CurrentThemeMode` to init toggle state

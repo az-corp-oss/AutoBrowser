@@ -5,8 +5,9 @@ WPF desktop app for Windows. Registers as `autobrowser://` protocol handler and 
 
 ## Dependency Injection (DI) & MVVM
 - Migrated to a Dependency Injection container using `Microsoft.Extensions.DependencyInjection`.
-- Core services, `MainWindow`, and `MainViewModel` are registered on startup in `App.xaml.cs`.
-- `MainWindow` has zero code-behind, resolving the `MainViewModel` from the global `ServiceProvider`.
+- Core services, `MainWindow`, pages, and `MainViewModel` are registered on startup in `App.xaml.cs`.
+- `MainWindow` uses page-based navigation via a `<ui:NavigationView>` that resolves pages (`HomePage`, `AboutPage`, `SettingsPage`) dynamically using `INavigationViewPageProvider` from the DI container.
+- Initial navigation is triggered inside the Window's `Loaded` handler to prevent timing issues before control templates are initialized.
 - `RoutingRule` properties use CommunityToolkit.Mvvm source generators and auto-saves to rule service on property change events.
 
 ## AutoUpdater (src/AutoUpdater/)
@@ -19,7 +20,7 @@ WPF desktop app for Windows. Registers as `autobrowser://` protocol handler and 
 AutoBrowser/
 ├── app.ico                      # Multi-res icon
 ├── App.xaml / App.xaml.cs       # Entry: Configure DI services, Single-instance mutex, CLI URL dispatch, ApplyTheme(), Window lifecycle events (Loaded, Closing, StateChanged), Tray Icon management
-├── MainWindow.xaml / .cs        # UI: Layout shell with sliced components. Zero code-behind (boilerplate constructor only)
+├── MainWindow.xaml / .cs        # UI: NavigationView is the sole root (no wrapping Grid, no custom TitleBar). ExtendsContentIntoTitleBar is NOT used — OS title bar ensures reliable drag + focus. Mica backdrop via WindowBackdropType="Mica".
 ├── AutoBrowser.csproj           # SDK-style, net10.0-windows, WPF + WinForms + WPF-UI + Microsoft.Extensions.DependencyInjection
 ├── Models/
 │   ├── AppSettings.cs           # ThemeMode (Light/Dark)
@@ -33,11 +34,14 @@ AutoBrowser/
 │   ├── IDefaultBrowserService.cs / DefaultBrowserService.cs  # Default browser reg
 │   ├── SingleInstanceService.cs                   # Named pipe IPC for single-instance
 │   ├── UrlInterceptorService.cs                   # URL matching + browser launch
+│   ├── NavigationViewPageProvider.cs             # Page resolver for NavigationView
 │   └── UpdateService.cs + ReleaseInfo record      # GitHub release check, download, update install
 ├── Views/
-│   ├── ToolbarView.xaml / .cs      # Sliced control: Add/Edit/Delete, Up/Down, Theme switch, Update check, URL test
-│   ├── RulesListView.xaml / .cs    # Sliced control: ListView of Rules with double-click edit, protocol checkboxes
-│   ├── FooterView.xaml / .cs       # Sliced control: Tray settings toggles and fallback browser combo box
+│   ├── HomePage.xaml / .cs         # Page: Primary page containing sliced controls (Toolbar, RulesList, Status)
+│   ├── SettingsPage.xaml / .cs     # Page: Dedicated Settings page with theme, browser registration, fallback, and system tray toggles
+│   ├── AboutPage.xaml / .cs        # Page: Modern About page with repository hyperlink and version info
+│   ├── ToolbarView.xaml / .cs      # Sliced control: Add/Edit/Delete, Up/Down, Update check, URL test
+│   ├── RulesListView.xaml / .cs    # Sliced control: ListView of Rules with double-click edit
 │   ├── StatusControl.xaml / .cs    # Sliced control: Status bar info display
 │   ├── RuleEditorView.xaml / .cs   # Add/Edit rule with browser dropdown
 │   └── RuleTesterView.xaml / .cs   # Test URL input dialog
