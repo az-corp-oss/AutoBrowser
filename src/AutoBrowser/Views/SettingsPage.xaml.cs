@@ -1,0 +1,13 @@
+using System.Windows.Controls;
+using AutoBrowser.ViewModels;
+
+namespace AutoBrowser.Views;
+
+public partial class SettingsPage : Page
+{
+    public SettingsPage(MainViewModel viewModel)
+    {
+        InitializeComponent();
+        DataContext = viewModel;
+    }
+}
