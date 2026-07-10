@@ -8,8 +8,10 @@
             BorderThickness="1" CornerRadius="4">
         <DockPanel>
             <!-- Right-aligned: Check Update -->
-            <ui:Button Content="Check Update" Command="{Binding CheckForUpdateCommand}"
-                       IsEnabled="{Binding CanCheckForUpdate}" DockPanel.Dock="Right"/>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                <ui:Button Content="Check Update" Command="{Binding CheckForUpdateCommand}"
+                           IsEnabled="{Binding CanCheckForUpdate}"/>
+            </StackPanel>
 
             <!-- Left-aligned groups -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -23,14 +25,6 @@
                 <!-- Rule ordering -->
                 <ui:Button Content="Move Up" Command="{Binding MoveUpCommand}" Margin="0,0,3,0"/>
                 <ui:Button Content="Move Down" Command="{Binding MoveDownCommand}"/>
-
-                <Rectangle Width="1" Height="20" Fill="{DynamicResource ControlElevationBorderBrush}" Margin="6,0"/>
-
-                <!-- Settings -->
-                <TextBlock Text="{Binding ThemeLabel}" Margin="0,0,2,0" VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                <ui:ToggleSwitch IsChecked="{Binding IsDarkTheme}"
-                                 VerticalAlignment="Center"/>
 
                 <Rectangle Width="1" Height="20" Fill="{DynamicResource ControlElevationBorderBrush}" Margin="6,0"/>
 

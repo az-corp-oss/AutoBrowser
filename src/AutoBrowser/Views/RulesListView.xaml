@@ -3,13 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-
         <!-- Rule list -->
-        <ui:ListView x:Name="RuleListView" Grid.Row="0"
+        <ui:ListView x:Name="RuleListView"
                      ItemsSource="{Binding Rules}"
                      SelectedItem="{Binding SelectedRule}"
                      SelectionMode="Single">
@@ -66,14 +61,6 @@
             </ui:ListView.ItemTemplate>
         </ui:ListView>
 
-        <!-- Bottom-right registration checkboxes -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,4,0,0">
-            <CheckBox Content="autobrowser://" IsChecked="{Binding IsProtocolRegistered}"
-                      Margin="0,0,12,0" VerticalAlignment="Center"
-                      Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-            <CheckBox Content="Default browser" IsChecked="{Binding IsDefaultBrowser}"
-                      VerticalAlignment="Center"
-                      Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-        </StackPanel>
+
     </Grid>
 </UserControl>
