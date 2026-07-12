@@ -28,25 +28,43 @@ public partial class App
         Log.Debug("MainWindow loaded, setting up tray icon");
         SetupTrayIcon();
 
-        var vm = Services.GetRequiredService<MainViewModel>();
-        await CheckAndPromptReRegister();
+        // Apply saved theme AFTER window exists (Gallery pattern)
+        var savedTheme = _settingsService.LoadSettings().ThemeMode;
+        ApplyTheme(savedTheme);
 
+        var vm = Services.GetRequiredService<MainViewModel>();
+        
         var args = Environment.GetCommandLineArgs();
         var forceUpdate = Array.Exists(args, arg => arg.Equals("--force-update-check", StringComparison.OrdinalIgnoreCase));
-        await vm.StartSilentUpdateCheckAsync(forceUpdate);
-        if (args.Length > 1)
+
+        if (_mainWindow == null) return;
+
+        // Delay prompt and update check so window is fully rendered and content is completely visible first
+        _mainWindow.ContentRendered += async (s, ev) =>
         {
-            var url = args[1];
-            Log.Debug("Command-line URL argument: {Url}", url);
-            if (IsUrl(url))
+            // Give extra frame time for full visual layout stability
+            await Task.Delay(200);
+
+            // Run silent update check first
+            await vm.StartSilentUpdateCheckAsync(forceUpdate);
+            
+            // Then prompt path re-registration
+            await CheckAndPromptReRegister();
+            
+            if (args.Length > 1)
             {
-                ProcessUrl(url);
+                var url = args[1];
+                Log.Debug("Command-line URL argument: {Url}", url);
+                if (IsUrl(url))
+                {
+                    ProcessUrl(url);
+                }
+                else
+                {
+                    Log.Debug("Ignoring non-URL argument: {Url}", url);
+                }
             }
-            else
-            {
-                Log.Debug("Ignoring non-URL argument: {Url}", url);
-            }
-        }
+        };
     }
 
     private void MainWindow_StateChanged(object? sender, EventArgs e)

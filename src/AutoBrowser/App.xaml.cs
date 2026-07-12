@@ -91,7 +91,6 @@ public partial class App : System.Windows.Application
         }
         Log.Information("Single instance mutex acquired");
 
-        ApplyTheme(_settingsService.LoadSettings().ThemeMode);
         ShowMainWindow();
         StartPipeServer();
     }
@@ -102,7 +101,11 @@ public partial class App : System.Windows.Application
         var theme = mode == AppThemeMode.Dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
         ApplicationThemeManager.Apply(theme);
         CurrentThemeMode = mode;
+    }
 
+    public void SaveTheme(AppThemeMode mode)
+    {
+        CurrentThemeMode = mode;
         var settings = _settingsService.LoadSettings();
         settings.ThemeMode = mode;
         _settingsService.SaveSettings(settings);

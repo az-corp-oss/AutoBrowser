@@ -7,13 +7,14 @@
         <ui:ListView x:Name="RuleListView"
                      ItemsSource="{Binding Rules}"
                      SelectedItem="{Binding SelectedRule}"
-                     SelectionMode="Single">
+                     SelectionMode="Single"
+                     Padding="0,0,0,16">
             <ui:ListView.ItemTemplate>
                 <DataTemplate>
-                    <Border Padding="10,8" Margin="0,2"
+                    <Border Padding="12,10" Margin="0,2"
                             Background="{DynamicResource CardBackgroundBrush}"
                             BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                            BorderThickness="1" CornerRadius="6">
+                            BorderThickness="1" CornerRadius="8">
                         <Border.InputBindings>
                             <MouseBinding MouseAction="LeftDoubleClick"
                                           Command="{Binding DataContext.EditRuleCommand, RelativeSource={RelativeSource AncestorType=ui:ListView}}" />
@@ -25,34 +26,25 @@
                             </Grid.ColumnDefinitions>
 
                             <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}"
-                                      VerticalAlignment="Top" Margin="0,2,10,0"/>
+                                      VerticalAlignment="Top" Margin="0,2,12,0"/>
 
                             <StackPanel Grid.Column="1">
                                 <!-- Row 1: Rule name + browser -->
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                    <TextBlock Text="  —  " Opacity="0.4"
-                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                    <TextBlock Text="{Binding BrowserDisplayName}" Opacity="0.7"
-                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                    <TextBlock Text="  —  " Opacity="0.4"
-                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                    <TextBlock Text="{Binding BrowserPath}" Opacity="0.4"
-                                               TextTrimming="CharacterEllipsis"
-                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                    <ui:TextBlock FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Name}"/>
+                                    <ui:TextBlock Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text=" — "/>
+                                    <ui:TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding BrowserDisplayName}"/>
+                                    <ui:TextBlock Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text=" — "/>
+                                    <ui:TextBlock MaxWidth="300" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding BrowserPath}" TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
 
                                 <!-- Row 2: Sequence + pattern -->
-                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                     <Border Background="{DynamicResource ControlFillColorDefaultBrush}"
-                                            CornerRadius="3" Padding="5,1" Margin="0,0,6,0">
-                                        <TextBlock Text="{Binding Sequence, StringFormat='#{0}'}" FontSize="11"
-                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                            CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Sequence, StringFormat='#{0}'}"/>
                                     </Border>
-                                    <TextBlock Text="{Binding UrlPattern}" FontFamily="Consolas" FontSize="12"
-                                               TextTrimming="CharacterEllipsis"
-                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                    <ui:TextBlock FontFamily="Consolas" FontTypography="Body" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding UrlPattern}" TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
                             </StackPanel>
                         </Grid>
@@ -60,7 +52,5 @@
                 </DataTemplate>
             </ui:ListView.ItemTemplate>
         </ui:ListView>
-
-
     </Grid>
 </UserControl>

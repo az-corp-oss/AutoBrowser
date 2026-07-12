@@ -5,6 +5,7 @@ using AutoBrowser.Models;
 using AutoBrowser.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Serilog;
+using Wpf.Ui.Appearance;
 
 namespace AutoBrowser.ViewModels;
 
@@ -13,11 +14,13 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IProtocolService _protocolService;
     private readonly IDefaultBrowserService _defaultBrowserService;
     private readonly ISettingsService _settingsService;
+    private bool _isInitialized;
 
     public List<BrowserDefinition> AvailableBrowsers { get; } = BrowserDefinition.GetKnownBrowsers();
 
     [ObservableProperty]
-    private bool _isDarkTheme;
+    [NotifyPropertyChangedFor(nameof(IsDarkTheme))]
+    private ApplicationTheme _currentApplicationTheme = ApplicationTheme.Unknown;
 
     [ObservableProperty]
     private BrowserDefinition? _fallbackBrowser;
@@ -30,6 +33,12 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private string _status = "Ready";
+
+    public bool IsDarkTheme
+    {
+        get => CurrentApplicationTheme == ApplicationTheme.Dark;
+        set => CurrentApplicationTheme = value ? ApplicationTheme.Dark : ApplicationTheme.Light;
+    }
 
     public bool IsProtocolRegistered
     {
@@ -78,9 +87,6 @@ public partial class SettingsViewModel : ObservableObject
         _defaultBrowserService = defaultBrowserService;
         _settingsService = settingsService;
 
-        var app = System.Windows.Application.Current as App;
-        _isDarkTheme = app?.CurrentThemeMode == AppThemeMode.Dark;
-
         var settings = _settingsService.LoadSettings();
         if (!string.IsNullOrEmpty(settings.FallbackBrowserPath))
             _fallbackBrowser = AvailableBrowsers.FirstOrDefault(b =>
@@ -88,12 +94,36 @@ public partial class SettingsViewModel : ObservableObject
 
         _minimizeToTray = settings.MinimizeToTray;
         _closeToTray = settings.CloseToTray;
+
+        Initialize();
     }
 
-    partial void OnIsDarkThemeChanged(bool value)
+    public void Initialize()
     {
-        ((App)System.Windows.Application.Current).ApplyTheme(value ? AppThemeMode.Dark : AppThemeMode.Light);
-        Status = value ? "Switched to Dark theme" : "Switched to Light theme";
+        if (_isInitialized) return;
+
+        CurrentApplicationTheme = ApplicationThemeManager.GetAppTheme();
+        ApplicationThemeManager.Changed += OnThemeChanged;
+        _isInitialized = true;
+    }
+
+    partial void OnCurrentApplicationThemeChanged(ApplicationTheme oldValue, ApplicationTheme newValue)
+    {
+        if (oldValue == newValue) return;
+        ApplicationThemeManager.Apply(newValue);
+
+        var app = System.Windows.Application.Current as App;
+        app?.SaveTheme(newValue == ApplicationTheme.Dark ? AppThemeMode.Dark : AppThemeMode.Light);
+
+        Status = newValue == ApplicationTheme.Dark ? "Switched to Dark theme" : "Switched to Light theme";
+    }
+
+    private void OnThemeChanged(ApplicationTheme currentApplicationTheme, System.Windows.Media.Color systemAccent)
+    {
+        if (CurrentApplicationTheme != currentApplicationTheme)
+        {
+            CurrentApplicationTheme = currentApplicationTheme;
+        }
     }
 
     partial void OnFallbackBrowserChanged(BrowserDefinition? value)

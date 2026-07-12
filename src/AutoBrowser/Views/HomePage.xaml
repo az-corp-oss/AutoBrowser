@@ -7,18 +7,31 @@
       xmlns:views="clr-namespace:AutoBrowser.Views"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      Title="HomePage">
+      Title="Home"
+      Background="Transparent"
+      ScrollViewer.CanContentScroll="False">
 
-    <Grid Margin="0,0,0,50">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Sliced: Toolbar -->
-        <views:ToolbarView Grid.Row="0" Margin="12,8,12,0"/>
+        <!-- Sticky Header -->
+        <StackPanel Grid.Row="0" Margin="24,24,24,0">
+            <ui:TextBlock FontTypography="Title" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Routing Rules"/>
+            <ui:TextBlock Margin="0,4,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Manage browser routing rules for incoming URLs"/>
+        </StackPanel>
 
-        <!-- Sliced: Rule list -->
-        <views:RulesListView Grid.Row="1" Margin="12,8,12,8"/>
+        <!-- Scrollable Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
+            <StackPanel Margin="24,16,24,80">
+                <!-- Toolbar -->
+                <views:ToolbarView Margin="0,0,0,12"/>
+
+                <!-- Rule List -->
+                <views:RulesListView Margin="0,0,0,8"/>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>
