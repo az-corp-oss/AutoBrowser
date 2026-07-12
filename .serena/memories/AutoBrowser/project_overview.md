@@ -22,7 +22,7 @@ src/
 │   └── app.ico
 ├── AutoUpdater/                     — Single-file console EXE for update file swap + relaunch
 │   └── Program.cs
-├── AutoBrowser.Tests/               — xUnit test project (38 tests)
+├── AutoBrowser.Tests/               — xUnit test project (44 tests)
 │   ├── Models/                      — BrowserDefinitionTests, RoutingRuleTests
 │   └── Services/                    — UrlInterceptorServiceTests
 ├── AutoBrowser.slnx                 — Solution file (SLNX format)
@@ -38,8 +38,9 @@ src/
 - Falls back to saved default browser when no rule matches (avoids infinite loops)
 - Portable: all data in `Data/` folder next to exe
 - Auto-update: checks GitHub releases on startup + manual button
+- Dark theme with explicit foreground brushes on all TextBlocks (FontTypography does not inherit theme foreground)
 - CI: pre-release on branch push, stable on tag push; revision from UTC time-of-day
-- Tests: 38 xUnit tests covering models and services
+- Tests: 44 xUnit tests covering models and services
 
 ## Developer Tools
 - **Serena MCP** — semantic code analysis (symbol search, references, refactoring) via `opencode.json`

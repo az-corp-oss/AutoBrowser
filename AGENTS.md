@@ -111,7 +111,7 @@ After **any** code or XAML change, run this sequence to confirm the app starts w
 1. Build: `dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging`
 2. Launch, wait 15s, close:
    ```powershell
-   $proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 15; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+   $proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 20; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
    ```
 3. Check the log at `bin\staging\Logs/` for any `[ERR]` entries.
 4. **Test re-register prompt** — simulate moved app by changing registry, launch, verify prompt, restore:
@@ -124,7 +124,7 @@ After **any** code or XAML change, run this sequence to confirm the app starts w
    Set-ItemProperty -Path $regPath -Name "(default)" -Value '"C:\OldLocation\AutoBrowser.exe" "%1"'
 
    # Launch and capture — user should see the dialog
-   $proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 15; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+   $proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 20; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
 
    # Restore original path
    Set-ItemProperty -Path $regPath -Name "(default)" -Value $original

@@ -1,3 +1,5 @@
+using System.Windows;
+using System.Windows.Controls;
 using Wpf.Ui.Controls;
 using Wpf.Ui.Abstractions;
 using AutoBrowser.ViewModels;
@@ -16,7 +18,7 @@ public partial class MainWindow : FluentWindow
         RootNavigation.SetPageProviderService(pageProvider);
         RootNavigation.Navigated += (s, e) =>
         {
-            if (e.Page is System.Windows.Controls.Page page)
+            if (e.Page is Page page)
             {
                 StatusView.DataContext = page.DataContext;
             }

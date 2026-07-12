@@ -48,14 +48,13 @@ public partial class App
         }
 
         // Check default browser registration
-        if (_defaultBrowserService.IsDefaultBrowser())
+        var registeredDefaultPath = _defaultBrowserService.GetRegisteredPath();
+        if (!string.IsNullOrEmpty(registeredDefaultPath))
         {
-            var registeredPath = _defaultBrowserService.GetRegisteredPath();
             Log.Debug("Default browser registration: RegisteredPath={Registered}, CurrentPath={Current}",
-                registeredPath, currentPath);
+                registeredDefaultPath, currentPath);
 
-            if (!string.IsNullOrEmpty(registeredPath)
-                && !registeredPath.Equals(currentPath, StringComparison.OrdinalIgnoreCase))
+            if (!registeredDefaultPath.Equals(currentPath, StringComparison.OrdinalIgnoreCase))
             {
                 needsReRegister = true;
                 registrationType = string.IsNullOrEmpty(registrationType)
@@ -68,9 +67,9 @@ public partial class App
         {
             Log.Information("App path has changed, prompting user to re-register: {Type}", registrationType);
 
-            var oldProtocolPath = _protocolService.IsProtocolRegistered() ? _protocolService.GetRegisteredPath() : null;
-            var oldDefaultPath = _defaultBrowserService.IsDefaultBrowser() ? _defaultBrowserService.GetRegisteredPath() : null;
-            var oldPath = oldProtocolPath ?? oldDefaultPath ?? "(unknown)";
+            var oldProtocolPath = _protocolService.GetRegisteredPath();
+            var oldDefaultPath = _defaultBrowserService.GetRegisteredPath();
+            var oldPath = !string.IsNullOrEmpty(oldProtocolPath) ? oldProtocolPath : (!string.IsNullOrEmpty(oldDefaultPath) ? oldDefaultPath : "(unknown)");
 
             var contentPanel = new System.Windows.Controls.StackPanel();
 
@@ -173,6 +172,14 @@ public partial class App
             };
             dialog.Owner = _mainWindow;
             var result = await dialog.ShowDialogAsync();
+        
+        // When the MessageBox closes, WPF may drop Window focus, causing ExtendsContentIntoTitleBar 
+        // dragging to fail until user clicks the client area. We force focus back to the MainWindow 
+        // to restore standard Windows drag behavior.
+        if (_mainWindow != null && _mainWindow.IsLoaded)
+        {
+            _mainWindow.Focus();
+        }
 
             if (result == Wpf.Ui.Controls.MessageBoxResult.Primary)
             {

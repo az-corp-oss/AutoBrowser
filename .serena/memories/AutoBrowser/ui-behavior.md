@@ -1,12 +1,19 @@
 # AutoBrowser — UI & Behavior
 
 ## Theme Toggle
-- **Control**: `ui:ToggleSwitch` in Settings Page, bound to `MainViewModel.IsDarkTheme` (bool)
+- **Control**: `ui:ToggleSwitch` in Settings Page, bound to `SettingsViewModel.IsDarkTheme`
 - **Enum**: `AppThemeMode` — `Light` (0), `Dark` (1) — `System` removed
-- **Default**: `Light`
-- **Flow**: `App.OnStartup` → loads settings → `ApplyTheme(mode)` → MainViewModel reads `App.CurrentThemeMode` to init toggle state
-- **Toggle setter** → `App.ApplyTheme(Dark|Light)` → `ApplicationThemeManager.Apply()` + loads existing settings → sets `ThemeMode` → persists to `Data/settings.json`
-- **`App.CurrentThemeMode`** property prevents desync from stale settings values
+- **Default**: `Light` (set in `App.xaml` via `<ui:ThemesDictionary Theme="Light"/>`)
+- **Flow**: `App.OnStartup` → `base.OnStartup` → `ShowMainWindow()` → `MainWindow_Loaded` → `ApplyTheme(savedTheme)`
+- **Theme is applied AFTER MainWindow exists** (Gallery pattern) — `ApplicationThemeManager.Apply()` needs the window to update its resources
+- **SettingsViewModel**: uses `ApplicationThemeManager.GetAppTheme()` to read current theme, `ApplicationThemeManager.Apply()` on toggle, subscribes to `ApplicationThemeManager.Changed` event
+- **`IsDarkTheme`** is computed property wrapping `CurrentApplicationTheme == ApplicationTheme.Dark`
+
+## Dark Theme Typography
+- **RULE**: All `ui:TextBlock` in views MUST have explicit `Foreground` brush binding — `FontTypography` alone does NOT inherit theme foreground
+- Primary text: `Foreground="{DynamicResource TextFillColorPrimaryBrush}"`
+- Secondary text: `Foreground="{DynamicResource TextFillColorSecondaryBrush}"`
+- Tertiary text: `Foreground="{DynamicResource TextFillColorTertiaryBrush}"`
 
 ## System Tray (Managed by App.xaml.cs)
 - `NotifyIcon` with app icon + context menu (Show Window, Exit)
@@ -45,9 +52,14 @@
 - Restore original path
 - Verify log shows `"App path has changed"`
 
+## WPF UI Reference
+- **Always check WPF UI Gallery source** (`lepoco/wpfui` on GitHub) for behavior/fixes before writing workarounds
+- Key pattern: `NavigationViewContentPresenter` wraps pages in `DynamicScrollViewer` — set `ScrollViewer.CanContentScroll="False"` on pages with their own ScrollViewer to disable NavView's built-in scroll
+- Related issues: #1041, #1230, #1503, #1606; PR #1610 fixed always-scrolling behavior
+
 ## Build & Run
 - **Verify compilation (app running)**: `dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging` — does NOT kill the running app
 - **Full build (kills app)**: `dotnet build src\AutoBrowser\AutoBrowser.csproj` — only when intentionally overwriting the running binary
 - **Run**: `dotnet run --project src\AutoBrowser\AutoBrowser.csproj` or run EXE directly
 - **Post-change ritual**: verify with `bin\staging` first (no kill), then exit app and run fresh copy
-- **Tests**: `dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj` (38 tests)
+- **Tests**: `dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj` (44 tests)

@@ -31,12 +31,9 @@
             <ui:NavigationView.FooterMenuItems>
                 <ui:NavigationViewItem Content="Settings" Icon="{ui:SymbolIcon Settings24}" TargetPageType="{x:Type views:SettingsPage}"/>
             </ui:NavigationView.FooterMenuItems>
-
-            <ui:NavigationView.ContentOverlay>
-                <Grid>
-                    <views:StatusControl x:Name="StatusView" VerticalAlignment="Bottom" Margin="24,0,24,12" />
-                </Grid>
-            </ui:NavigationView.ContentOverlay>
         </ui:NavigationView>
+
+        <!-- Floating status control positioned in root grid to not interfere with page scroll. -->
+        <views:StatusControl Grid.Row="1" x:Name="StatusView" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="24,0,24,12" Panel.ZIndex="100"/>
     </Grid>
 </ui:FluentWindow>

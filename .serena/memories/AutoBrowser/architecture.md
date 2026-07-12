@@ -37,22 +37,34 @@ AutoBrowser/
 │   ├── NavigationViewPageProvider.cs             # Page resolver for NavigationView
 │   └── UpdateService.cs + ReleaseInfo record      # GitHub release check, download, update install
 ├── Views/
-│   ├── HomePage.xaml / .cs         # Page: Primary page containing sliced controls (Toolbar, RulesList, Status)
-│   ├── SettingsPage.xaml / .cs     # Page: Dedicated Settings page with theme, browser registration, fallback, and system tray toggles
-│   ├── AboutPage.xaml / .cs        # Page: Modern About page with repository hyperlink and version info
+│   ├── HomePage.xaml / .cs         # Page: Sticky header + scrollable toolbar/rules. Uses ScrollViewer.CanContentScroll="False" to disable NavView DynamicScrollViewer.
+│   ├── SettingsPage.xaml / .cs     # Page: Sticky header + scrollable settings cards. Uses ScrollViewer.CanContentScroll="False".
+│   ├── AboutPage.xaml / .cs        # Page: Sticky header + scrollable app info + credits. Uses ScrollViewer.CanContentScroll="False".
 │   ├── ToolbarView.xaml / .cs      # Sliced control: Add/Edit/Delete, Up/Down, Update check, URL test
 │   ├── RulesListView.xaml / .cs    # Sliced control: ListView of Rules with double-click edit
-│   ├── StatusControl.xaml / .cs    # Sliced control: Status bar info display
-│   ├── RuleEditorView.xaml / .cs   # Add/Edit rule with browser dropdown
-│   └── RuleTesterView.xaml / .cs   # Test URL input dialog
-└── ViewModels/
-    └── MainViewModel.cs         # ViewModel containing commands and state properties for views.
+│   ├── StatusControl.xaml / .cs    # Floating overlay control at bottom-center, IsHitTestVisible="False" on root
+│   ├── RuleEditorView.xaml / .cs   # FluentWindow: Add/Edit rule with browser dropdown
+│   └── RuleTesterView.xaml / .cs   # FluentWindow: Test URL input dialog
+├── ViewModels/
+│   ├── MainViewModel.cs           # ViewModel containing commands and state properties for views.
+│   └── SettingsViewModel.cs       # Theme toggle, browser registration, tray settings. Uses ApplicationThemeManager directly.
 ```
 
 ## Key Design Decisions
-- **Dependency Injection**: Services and views resolved from centralized `ServiceProvider` in `App.xaml.cs`.
+- **Dependency Injection**: Services and views resolved from centralized `ServiceProvider` in `App.xaml.cs`. ViewModels registered as `AddTransient`, services as `AddSingleton`.
 - **Portable**: All data in `Data/` folder next to EXE, not %APPDATA%
 - **Per-user registry**: No admin elevation needed
 - **Default browser via HKCU**: `RegisteredApplications` approach (user confirms in Settings)
 - **Auto-merge rules**: Default rules merged by `Name`, never overwrites user edits
 - **Infinite-loop protection**: Always launch unmatched URLs via saved-default-browser EXE path, not shell association
+
+## Dark Theme Typography (Critical Rule)
+All `ui:TextBlock` with `FontTypography` MUST have explicit `Foreground` brush binding. `FontTypography` alone does NOT inherit theme foreground — WPF defaults to black text.
+- Primary: `Foreground="{DynamicResource TextFillColorPrimaryBrush}"`
+- Secondary: `Foreground="{DynamicResource TextFillColorSecondaryBrush}"`
+
+## Theme Initialization (Gallery Pattern)
+`ApplicationThemeManager.Apply()` requires `MainWindow` to exist. Startup order: `base.OnStartup` → `ShowMainWindow()` → `MainWindow_Loaded` → `ApplyTheme(savedTheme)`.
+
+## Page Layout Pattern
+Pages use sticky header + scrollable content: `Grid` with Row="0" (Auto header) + Row="1" (*) ScrollViewer. `ScrollViewer.CanContentScroll="False"` disables NavView's built-in DynamicScrollViewer.

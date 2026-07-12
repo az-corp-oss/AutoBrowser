@@ -6,12 +6,6 @@
                 WindowStartupLocation="CenterOwner"
                 ShowInTaskbar="False"
                 Foreground="{DynamicResource TextFillColorPrimaryBrush}">
-    <ui:FluentWindow.Resources>
-        <Style TargetType="TextBlock" x:Key="Label">
-            <Setter Property="Margin" Value="0,0,0,4"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-        </Style>
-    </ui:FluentWindow.Resources>
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -25,18 +19,18 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Rule Name" Style="{StaticResource Label}" Grid.Row="0"/>
+        <ui:TextBlock Grid.Row="0" FontTypography="BodyStrong" Margin="0,0,0,4" Text="Rule Name"/>
         <ui:TextBox x:Name="NameBox" Grid.Row="1" Margin="0,0,0,10" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"/>
 
-        <TextBlock Text="URL Pattern (regex or plain text)" Style="{StaticResource Label}" Grid.Row="2"/>
+        <ui:TextBlock Grid.Row="2" FontTypography="BodyStrong" Margin="0,0,0,4" Text="URL Pattern (regex or plain text)"/>
         <ui:TextBox x:Name="PatternBox" Grid.Row="3" Margin="0,0,0,10" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"/>
 
-        <TextBlock Text="Detected Browsers" Style="{StaticResource Label}" Grid.Row="4"/>
+        <ui:TextBlock Grid.Row="4" FontTypography="BodyStrong" Margin="0,0,0,4" Text="Detected Browsers"/>
         <ComboBox x:Name="BrowserCombo" Grid.Row="5" Margin="0,0,0,10"
                   DisplayMemberPath="DisplayName"
                   SelectionChanged="BrowserCombo_SelectionChanged"/>
 
-        <TextBlock Text="Or enter custom path" Style="{StaticResource Label}" Grid.Row="6"/>
+        <ui:TextBlock Grid.Row="6" FontTypography="BodyStrong" Margin="0,0,0,4" Text="Or enter custom path"/>
         <Grid Grid.Row="7" Margin="0,0,0,10" MinHeight="80">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>

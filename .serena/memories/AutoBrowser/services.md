@@ -30,7 +30,7 @@ Order (duplicates skipped by EXE path):
 - `SingleInstanceService` manages pipe server in background `Task.Run` loop
 - Protocol: `"SHOW"` or `"SHOW|<url>"` — brings existing window to front
 - `WindowForegroundHelper` uses Win32 P/Invoke (`SetForegroundWindow`, `ShowWindow`)
-- `MainWindow.ActivateFromTray(url)` restores window and processes forwarded URL
+- `App.ActivateFromTray(url)` restores window and processes forwarded URL
 
 ## Persistence
 ### Rules (`Data/rules.json`)

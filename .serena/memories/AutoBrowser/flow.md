@@ -1,8 +1,8 @@
 # AutoBrowser — Data Flow & URL Matching
 
 ## Start-up Flow
-1. ViewModel constructor → loads rules/theme, binds commands
-2. `_ = CheckForUpdateSilentAsync()` — fire-and-forget update check
+1. `App.OnStartup` → `base.OnStartup` → services resolved → `ApplyTheme` (moved to Loaded)
+2. `ShowMainWindow()` → `MainWindow_Loaded` → `ApplyTheme(savedTheme)` → `SetupTrayIcon()` → `ContentRendered` → silent update check + re-register prompt + CLI URL dispatch
 3. Silent check: if no release or up-to-date → nothing; if newer → shows Update Available dialog
 4. Manual "Check Update" button: full status feedback + same dialog
 
