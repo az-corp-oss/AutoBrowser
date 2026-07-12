@@ -14,7 +14,7 @@ dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging
 
 ## 3. Launch and Verify
 ```powershell
-$proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 15; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+$proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 20; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
 ```
 
 ## 4. Check Logs
@@ -32,8 +32,11 @@ $original = (Get-ItemProperty -Path $regPath -Name "(default)")."(default)"
 Set-ItemProperty -Path $regPath -Name "(default)" -Value '"C:\OldLocation\AutoBrowser.exe" "%1"'
 
 # Launch — user should see the dialog
-$proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 15; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+$proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 20; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
 
 # Restore original path
 Set-ItemProperty -Path $regPath -Name "(default)" -Value $original
+
+# Verify log shows re-register was triggered
+Get-ChildItem "bin\staging\Logs\" -Filter "*.log" | Sort-Object LastWriteTime -Descending | Select-Object -First 1 | ForEach-Object { Get-Content $_.FullName | Select-String "App path has changed" }
 ```
