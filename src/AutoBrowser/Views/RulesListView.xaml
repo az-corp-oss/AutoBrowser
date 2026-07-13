@@ -8,7 +8,8 @@
                      ItemsSource="{Binding Rules}"
                      SelectedItem="{Binding SelectedRule}"
                      SelectionMode="Single"
-                     Padding="0,0,0,16">
+                     Padding="0,0,0,16"
+                     AutomationProperties.AutomationId="RuleListView">
             <ui:ListView.ItemTemplate>
                 <DataTemplate>
                     <Border Padding="12,10" Margin="0,2"
@@ -31,7 +32,7 @@
                             <StackPanel Grid.Column="1">
                                 <!-- Row 1: Rule name + browser -->
                                 <StackPanel Orientation="Horizontal">
-                                    <ui:TextBlock FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Name}"/>
+                                    <ui:TextBlock FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Name}" AutomationProperties.AutomationId="RuleNameText"/>
                                     <ui:TextBlock Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text=" — "/>
                                     <ui:TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding BrowserDisplayName}"/>
                                     <ui:TextBlock Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text=" — "/>
