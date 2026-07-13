@@ -36,6 +36,8 @@ public partial class App
         
         var args = Environment.GetCommandLineArgs();
         var forceUpdate = Array.Exists(args, arg => arg.Equals("--force-update-check", StringComparison.OrdinalIgnoreCase));
+        var skipUpdate = Array.Exists(args, arg => arg.Equals("--no-update-check", StringComparison.OrdinalIgnoreCase));
+        var skipReRegister = Array.Exists(args, arg => arg.Equals("--no-re-register-prompt", StringComparison.OrdinalIgnoreCase));
 
         if (_mainWindow == null) return;
 
@@ -45,24 +47,23 @@ public partial class App
             // Give extra frame time for full visual layout stability
             await Task.Delay(200);
 
-            // Run silent update check first
-            await vm.StartSilentUpdateCheckAsync(forceUpdate);
-            
-            // Then prompt path re-registration
-            await CheckAndPromptReRegister();
-            
-            if (args.Length > 1)
+            if (!skipUpdate)
             {
-                var url = args[1];
+                // Run silent update check first
+                await vm.StartSilentUpdateCheckAsync(forceUpdate);
+            }
+            
+            if (!skipReRegister)
+            {
+                // Then prompt path re-registration
+                await CheckAndPromptReRegister();
+            }
+            
+            var url = Array.Find(args, IsUrl);
+            if (url != null)
+            {
                 Log.Debug("Command-line URL argument: {Url}", url);
-                if (IsUrl(url))
-                {
-                    ProcessUrl(url);
-                }
-                else
-                {
-                    Log.Debug("Ignoring non-URL argument: {Url}", url);
-                }
+                ProcessUrl(url);
             }
         };
     }
