@@ -25,5 +25,7 @@
 - Improved startup sequence to avoid overlapping dialog boxes.
 
 ## Tests & CI
-- Added FlaUI integration UI test for deleting rules (`MainWindow_DeleteRule`).
+- Added FlaUI integration UI test for adding, editing and deleting rules (`MainWindow_AddRule_FillForm_Save`, `MainWindow_EditRule_FillForm_Save`, `MainWindow_DeleteRule`). Note: FlaUI requires desktop session; it fails in headless CI.
+- Added `AutomationProperties.AutomationId` to `RuleEditorView.xaml` controls for FlaUI testability.
+- Installed Husky.NET v0.9.1 for git hooks: pre-commit runs 79 unit tests, blocks commit on failure.
 - Formulated CI revision calculation based on UTC seconds.

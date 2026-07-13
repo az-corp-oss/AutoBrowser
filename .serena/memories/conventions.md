@@ -13,6 +13,11 @@
 - **Page Layout**: Set `ScrollViewer.CanContentScroll="False"` on pages with their own `ScrollViewer` to disable NavigationView's built-in scroll.
 - **Dialogs**: Use WPF UI `MessageBox` with `ShowDialogAsync()` instead of `System.Windows.MessageBox`.
 
+## Testing
+- UI tests (FlaUI) require active desktop environment. Running headless (like CI/SSH without desktop session) causes `GetMainWindow()` to return null/fail. Run `HomeViewModelRuleTests` unit tests under headless environments.
+- **WPF UI Controls**: Add `AutomationProperties.AutomationId` to `ui:TextBox`/`ui:Button` for FlaUI testability — `x:Name` alone is not exposed as AutomationId.
+- **Git Hooks**: Husky.NET enforces unit tests on `git commit`. Manual trigger: `dotnet husky run --group pre-commit`.
+
 ## Logging Hierarchy
 - `Information` - Method entry/exit points, key parameters, completion status.
 - `Debug` - Intermediate steps, variable values, branch conditions.

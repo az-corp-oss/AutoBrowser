@@ -22,6 +22,10 @@ AutoBrowser/
 ├── App.xaml / App.xaml.cs       # Entry: Configure DI services, Single-instance mutex, CLI URL dispatch, ApplyTheme(), Window lifecycle events (Loaded, Closing, StateChanged), Tray Icon management
 ├── MainWindow.xaml / .cs        # UI: NavigationView is the sole root (no wrapping Grid, no custom TitleBar). ExtendsContentIntoTitleBar is NOT used — OS title bar ensures reliable drag + focus. Mica backdrop via WindowBackdropType="Mica".
 ├── AutoBrowser.csproj           # SDK-style, net10.0-windows, WPF + WinForms + WPF-UI + Microsoft.Extensions.DependencyInjection
+├── dotnet-tools.json            # Local tool manifest (Husky.NET v0.9.1)
+├── .husky/
+│   ├── pre-commit               # Git hook: runs unit tests before commit
+│   └── task-runner.json         # Task definitions (pre-commit group)
 ├── Models/
 │   ├── AppSettings.cs           # ThemeMode (Light/Dark)
 │   ├── AppThemeMode.cs          # Light=0, Dark=1 (System removed)

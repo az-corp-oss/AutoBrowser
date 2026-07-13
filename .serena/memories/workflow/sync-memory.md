@@ -1,6 +1,6 @@
-# Sync Memory on Project Changes
+# Sync Memory on Project Changes — MANDATORY
 
-Every time a project change is made (code edits, config changes, new files, etc.), the state must be synced to Serena memories so future tasks have accurate context.
+Every time a project change is made (code edits, config changes, new files, etc.), the state MUST be synced to Serena memories so future tasks have accurate context. **This is not optional — always perform memory maintenance after ANY change.**
 
 ## What to sync
 - New features or components added
