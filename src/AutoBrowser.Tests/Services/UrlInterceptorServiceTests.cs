@@ -1,6 +1,7 @@
 using AutoBrowser.Models;
 using AutoBrowser.Services;
 using Moq;
+using Xunit;
 
 namespace AutoBrowser.Tests.Services;
 
@@ -18,28 +19,31 @@ public class UrlInterceptorServiceTests
     }
 
     [Fact]
-    public void TryRoute_NullUrl_ReturnsNull()
+    public void TryRoute_NullUrl_ReturnsNoMatch()
     {
         var result = _sut.TryRoute(null!);
-        Assert.Null(result);
+        Assert.Equal(RouteResultType.NoMatch, result.Type);
+        Assert.Null(result.BrowserDisplayName);
     }
 
     [Fact]
-    public void TryRoute_EmptyUrl_ReturnsNull()
+    public void TryRoute_EmptyUrl_ReturnsNoMatch()
     {
         var result = _sut.TryRoute("");
-        Assert.Null(result);
+        Assert.Equal(RouteResultType.NoMatch, result.Type);
+        Assert.Null(result.BrowserDisplayName);
     }
 
     [Fact]
-    public void TryRoute_WhitespaceUrl_ReturnsNull()
+    public void TryRoute_WhitespaceUrl_ReturnsNoMatch()
     {
         var result = _sut.TryRoute("   ");
-        Assert.Null(result);
+        Assert.Equal(RouteResultType.NoMatch, result.Type);
+        Assert.Null(result.BrowserDisplayName);
     }
 
     [Fact]
-    public void TryRoute_NoMatchingRules_ReturnsNull()
+    public void TryRoute_NoMatchingRules_ReturnsNoMatch()
     {
         _mockRuleService.Setup(x => x.LoadRules()).Returns(new List<RoutingRule>
         {
@@ -47,7 +51,8 @@ public class UrlInterceptorServiceTests
         });
 
         var result = _sut.TryRoute("https://gitlab.com/user/repo");
-        Assert.Null(result);
+        Assert.Equal(RouteResultType.NoMatch, result.Type);
+        Assert.Null(result.BrowserDisplayName);
     }
 
     [Fact]
@@ -70,7 +75,8 @@ public class UrlInterceptorServiceTests
         });
 
         var result = _sut.TryRoute("https://github.com/user/repo");
-        Assert.Null(result);
+        Assert.Equal(RouteResultType.NoMatch, result.Type);
+        Assert.Null(result.BrowserDisplayName);
     }
 
     [Fact]
@@ -97,12 +103,13 @@ public class UrlInterceptorServiceTests
     }
 
     [Fact]
-    public void TryRoute_FallbackBrowser_ReturnsNullWhenNotFound()
+    public void TryRoute_FallbackBrowser_ReturnsNoMatchWhenNotFound()
     {
         _mockRuleService.Setup(x => x.LoadRules()).Returns(new List<RoutingRule>());
 
         var result = _sut.TryRoute("https://example.com", @"C:\nonexistent\fallback.exe");
-        Assert.Null(result);
+        Assert.Equal(RouteResultType.NoMatch, result.Type);
+        Assert.Null(result.BrowserDisplayName);
     }
 
     [Fact]
@@ -115,5 +122,26 @@ public class UrlInterceptorServiceTests
         });
 
         Assert.ThrowsAny<Exception>(() => _sut.TryRoute("https://github.com/user/repo"));
+    }
+
+    [Fact]
+    public void TryRoute_MatchingDropRule_ReturnsDroppedWithoutLaunching()
+    {
+        _mockRuleService.Setup(x => x.LoadRules()).Returns(new List<RoutingRule>
+        {
+            new()
+            {
+                Name = "Drop Git",
+                UrlPattern = @"github\.com",
+                IsEnabled = true,
+                Sequence = 1,
+                Action = RoutingAction.Drop,
+                BrowserPath = @"C:\nonexistent\chrome.exe"
+            }
+        });
+
+        var result = _sut.TryRoute("https://github.com/user/repo");
+        Assert.Equal(RouteResultType.Dropped, result.Type);
+        Assert.Null(result.BrowserDisplayName);
     }
 }

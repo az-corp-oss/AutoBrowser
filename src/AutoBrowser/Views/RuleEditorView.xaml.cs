@@ -19,6 +19,9 @@ public partial class RuleEditorView : FluentWindow
         Rule = new RoutingRule();
         Owner = Application.Current.MainWindow;
 
+        ActionCombo.ItemsSource = Enum.GetValues(typeof(RoutingAction));
+        ActionCombo.SelectedItem = RoutingAction.Forward;
+
         var browsers = BrowserDefinition.GetKnownBrowsers();
         Log.Information("RuleEditorView: Found {Count} browsers", browsers.Count);
         BrowserCombo.ItemsSource = browsers;
@@ -32,6 +35,7 @@ public partial class RuleEditorView : FluentWindow
     {
         NameBox.Text = existing.Name;
         PatternBox.Text = existing.UrlPattern;
+        ActionCombo.SelectedItem = existing.Action;
         BrowserPathBox.Text = existing.BrowserPath;
 
         var browsers = BrowserCombo.ItemsSource as List<BrowserDefinition>;
@@ -39,6 +43,23 @@ public partial class RuleEditorView : FluentWindow
             b.ExecutablePath.Equals(existing.BrowserPath, StringComparison.OrdinalIgnoreCase));
         if (match != null)
             BrowserCombo.SelectedItem = match;
+    }
+
+    private void ActionCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ActionCombo == null || BrowserComboLabel == null || BrowserCombo == null || CustomPathLabel == null || CustomPathGrid == null)
+            return;
+
+        if (ActionCombo.SelectedItem is RoutingAction action)
+        {
+            var isForward = action == RoutingAction.Forward;
+            var visibility = isForward ? Visibility.Visible : Visibility.Collapsed;
+
+            BrowserComboLabel.Visibility = visibility;
+            BrowserCombo.Visibility = visibility;
+            CustomPathLabel.Visibility = visibility;
+            CustomPathGrid.Visibility = visibility;
+        }
     }
 
     private void BrowserCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -61,15 +82,22 @@ public partial class RuleEditorView : FluentWindow
 
     private async void Ok_Click(object sender, RoutedEventArgs e)
     {
-        Log.Information("Ok_Click: NameBox.Text='{Name}', PatternBox.Text='{Pattern}', BrowserPathBox.Text='{Path}'",
-            NameBox.Text, PatternBox.Text, BrowserPathBox.Text);
+        Log.Information("Ok_Click: NameBox.Text='{Name}', PatternBox.Text='{Pattern}', BrowserPathBox.Text='{Path}', Action='{Action}'",
+            NameBox.Text, PatternBox.Text, BrowserPathBox.Text, ActionCombo.SelectedItem);
 
-        if (string.IsNullOrWhiteSpace(NameBox.Text) ||
-            string.IsNullOrWhiteSpace(PatternBox.Text) ||
-            string.IsNullOrWhiteSpace(BrowserPathBox.Text))
+        var selectedAction = ActionCombo.SelectedItem is RoutingAction action ? action : RoutingAction.Forward;
+
+        if (string.IsNullOrWhiteSpace(NameBox.Text) || string.IsNullOrWhiteSpace(PatternBox.Text))
         {
-            Log.Warning("Ok_Click: Validation failed - empty fields");
-            await MessageBoxHelper.ShowAsync("Validation", "Name, URL pattern, and browser are required.");
+            Log.Warning("Ok_Click: Validation failed - empty name or pattern");
+            await MessageBoxHelper.ShowAsync("Validation", "Name and URL pattern are required.");
+            return;
+        }
+
+        if (selectedAction == RoutingAction.Forward && string.IsNullOrWhiteSpace(BrowserPathBox.Text))
+        {
+            Log.Warning("Ok_Click: Validation failed - empty browser path for Forward action");
+            await MessageBoxHelper.ShowAsync("Validation", "Browser path is required for Forward action.");
             return;
         }
 
@@ -83,10 +111,28 @@ public partial class RuleEditorView : FluentWindow
 
         Rule.Name = NameBox.Text.Trim();
         Rule.UrlPattern = PatternBox.Text.Trim();
-        Rule.BrowserPath = BrowserPathBox.Text.Trim();
+        Rule.Action = selectedAction;
 
-        Log.Information("Ok_Click: Rule saved - Name={Name}, Pattern={Pattern}, Path={Path}",
-            Rule.Name, Rule.UrlPattern, Rule.BrowserPath);
+        if (selectedAction == RoutingAction.Forward)
+        {
+            Rule.BrowserPath = BrowserPathBox.Text.Trim();
+            if (BrowserCombo.SelectedItem is BrowserDefinition browser)
+            {
+                Rule.BrowserArguments = browser.ArgumentsTemplate;
+            }
+            else
+            {
+                Rule.BrowserArguments = "{url}";
+            }
+        }
+        else
+        {
+            Rule.BrowserPath = string.Empty;
+            Rule.BrowserArguments = string.Empty;
+        }
+
+        Log.Information("Ok_Click: Rule saved - Name={Name}, Pattern={Pattern}, Action={Action}, Path={Path}",
+            Rule.Name, Rule.UrlPattern, Rule.Action, Rule.BrowserPath);
 
         DialogResult = true;
         Close();

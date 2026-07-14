@@ -165,13 +165,32 @@ public partial class HomeViewModel : ObservableObject
 
         var settings = _settingsService.LoadSettings();
         var interceptor = new UrlInterceptorService(_ruleService, _defaultBrowserService);
-        var browser = interceptor.TryRoute(url, settings.FallbackBrowserPath);
-        if (browser is not null)
-            Status = $"Routed via {browser}: {url}";
+        var result = interceptor.TryRoute(url, settings.FallbackBrowserPath);
+        if (result.Type == RouteResultType.Forwarded)
+        {
+            Status = $"Routed via {result.BrowserDisplayName}: {url}";
+            if (settings.ShowPushNotifications)
+            {
+                var msg = string.IsNullOrEmpty(result.RuleName) ? $"Routed via {result.BrowserDisplayName}:\n{url}" : $"Routed via {result.BrowserDisplayName} ({result.RuleName}):\n{url}";
+                ShowNotification("AutoBrowser", msg);
+            }
+        }
+        else if (result.Type == RouteResultType.Dropped)
+        {
+            Status = $"Dropped: {url}";
+            if (settings.ShowPushNotifications)
+            {
+                var msg = string.IsNullOrEmpty(result.RuleName) ? $"URL dropped by matching rule:\n{url}" : $"URL dropped by matching rule ({result.RuleName}):\n{url}";
+                ShowNotification("AutoBrowser", msg);
+            }
+        }
         else
         {
             Status = $"No match: {url}";
-            ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
+            if (settings.ShowPushNotifications)
+            {
+                ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
+            }
         }
     }
 
@@ -258,12 +277,26 @@ public partial class HomeViewModel : ObservableObject
     {
         try
         {
-            using var icon = new NotifyIcon
+            var icon = new NotifyIcon
             {
                 Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? ""),
                 Visible = true
             };
             icon.ShowBalloonTip(3000, title, message, ToolTipIcon.Warning);
+            
+            // Keep icon alive for balloon tip to render, then dispose
+            _ = Task.Delay(4000).ContinueWith(_ =>
+            {
+                try
+                {
+                    icon.Visible = false;
+                    icon.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to dispose notification icon");
+                }
+            });
         }
         catch (Exception ex)
         {

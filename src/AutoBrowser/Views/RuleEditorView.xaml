@@ -2,7 +2,7 @@
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-                Title="Routing Rule" Height="440" Width="700"
+                Title="Routing Rule" Height="480" Width="700"
                 WindowStartupLocation="CenterOwner"
                 ShowInTaskbar="False"
                 Foreground="{DynamicResource TextFillColorPrimaryBrush}">
@@ -15,7 +15,9 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -27,14 +29,19 @@
         <ui:TextBox x:Name="PatternBox" Grid.Row="3" Margin="0,0,0,10" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"
                     AutomationProperties.AutomationId="PatternBox"/>
 
-        <ui:TextBlock Grid.Row="4" FontTypography="BodyStrong" Margin="0,0,0,4" Text="Detected Browsers"/>
-        <ComboBox x:Name="BrowserCombo" Grid.Row="5" Margin="0,0,0,10"
+        <ui:TextBlock Grid.Row="4" FontTypography="BodyStrong" Margin="0,0,0,4" Text="Action"/>
+        <ComboBox x:Name="ActionCombo" Grid.Row="5" Margin="0,0,0,10"
+                  SelectionChanged="ActionCombo_SelectionChanged"
+                  AutomationProperties.AutomationId="ActionCombo"/>
+
+        <ui:TextBlock x:Name="BrowserComboLabel" Grid.Row="6" FontTypography="BodyStrong" Margin="0,0,0,4" Text="Detected Browsers"/>
+        <ComboBox x:Name="BrowserCombo" Grid.Row="7" Margin="0,0,0,10"
                   DisplayMemberPath="DisplayName"
                   SelectionChanged="BrowserCombo_SelectionChanged"
                   AutomationProperties.AutomationId="BrowserCombo"/>
 
-        <ui:TextBlock Grid.Row="6" FontTypography="BodyStrong" Margin="0,0,0,4" Text="Or enter custom path"/>
-        <Grid Grid.Row="7" Margin="0,0,0,10" MinHeight="80">
+        <ui:TextBlock x:Name="CustomPathLabel" Grid.Row="8" FontTypography="BodyStrong" Margin="0,0,0,4" Text="Or enter custom path"/>
+        <Grid x:Name="CustomPathGrid" Grid.Row="9" Margin="0,0,0,10" MinHeight="80">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -48,7 +55,7 @@
             <ui:Button Grid.Column="1" Content="Browse..." Padding="8,4" VerticalAlignment="Center" Click="BrowseBrowser"/>
         </Grid>
 
-        <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right">
+        <StackPanel Grid.Row="10" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
             <ui:Button Content="OK" IsDefault="True" Width="80" Margin="0,0,8,0" Click="Ok_Click"
                        AutomationProperties.AutomationId="OkButton"/>
             <ui:Button Content="Cancel" IsCancel="True" Width="80" Click="Cancel_Click"

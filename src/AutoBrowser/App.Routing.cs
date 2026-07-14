@@ -1,5 +1,6 @@
 using AutoBrowser.Services;
 using AutoBrowser.Helpers;
+using AutoBrowser.Models;
 using Serilog;
 
 namespace AutoBrowser;
@@ -11,17 +12,35 @@ public partial class App
         Log.Debug("ProcessUrl called: {Url}", url);
 
         var interceptor = new UrlInterceptorService(_ruleService, _defaultBrowserService);
-        var fallbackPath = _settingsService.LoadSettings().FallbackBrowserPath;
-        var browser = interceptor.TryRoute(url, fallbackPath);
-        if (browser is not null)
+        var settings = _settingsService.LoadSettings();
+        var fallbackPath = settings.FallbackBrowserPath;
+        var result = interceptor.TryRoute(url, fallbackPath);
+        if (result.Type == RouteResultType.Forwarded)
         {
-            Log.Information("URL routed via {Browser}: {Url}", browser, url);
-            ShowNotification("AutoBrowser", $"Routed via {browser}:\n{url}");
+            Log.Information("URL routed via {Browser}: {Url}", result.BrowserDisplayName, url);
+            if (settings.ShowPushNotifications)
+            {
+                var msg = string.IsNullOrEmpty(result.RuleName) ? $"Routed via {result.BrowserDisplayName}:\n{url}" : $"Routed via {result.BrowserDisplayName} ({result.RuleName}):\n{url}";
+                ShowNotification("AutoBrowser", msg);
+            }
+            return;
+        }
+        else if (result.Type == RouteResultType.Dropped)
+        {
+            Log.Information("URL dropped by matching rule: {Url}", url);
+            if (settings.ShowPushNotifications)
+            {
+                var msg = string.IsNullOrEmpty(result.RuleName) ? $"URL dropped by matching rule:\n{url}" : $"URL dropped by matching rule ({result.RuleName}):\n{url}";
+                ShowNotification("AutoBrowser", msg);
+            }
             return;
         }
 
         Log.Warning("No rule matched for URL: {Url}", url);
-        ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
+        if (settings.ShowPushNotifications)
+        {
+            ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
+        }
     }
 
     public void ActivateFromTray(string? url = null)
@@ -50,18 +69,36 @@ public partial class App
     {
         Log.Information("Routing URL via UrlInterceptorService");
         var interceptor = new UrlInterceptorService(_ruleService, _defaultBrowserService);
-        var fallbackPath = _settingsService.LoadSettings().FallbackBrowserPath;
-        var browser = interceptor.TryRoute(url, fallbackPath);
+        var settings = _settingsService.LoadSettings();
+        var fallbackPath = settings.FallbackBrowserPath;
+        var result = interceptor.TryRoute(url, fallbackPath);
 
-        if (browser is not null)
+        if (result.Type == RouteResultType.Forwarded)
         {
-            Log.Debug("URL routed via {Browser}, shutting down", browser);
-            ShowNotification("AutoBrowser", $"Routed via {browser}:\n{url}");
+            Log.Debug("URL routed via {Browser}, shutting down", result.BrowserDisplayName);
+            if (settings.ShowPushNotifications)
+            {
+                var msg = string.IsNullOrEmpty(result.RuleName) ? $"Routed via {result.BrowserDisplayName}:\n{url}" : $"Routed via {result.BrowserDisplayName} ({result.RuleName}):\n{url}";
+                ShowNotification("AutoBrowser", msg);
+            }
+            return true;
+        }
+        else if (result.Type == RouteResultType.Dropped)
+        {
+            Log.Debug("URL dropped, shutting down");
+            if (settings.ShowPushNotifications)
+            {
+                var msg = string.IsNullOrEmpty(result.RuleName) ? $"URL dropped by matching rule:\n{url}" : $"URL dropped by matching rule ({result.RuleName}):\n{url}";
+                ShowNotification("AutoBrowser", msg);
+            }
             return true;
         }
 
         Log.Debug("No match for URL, showing notification and continuing to main window");
-        ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
+        if (settings.ShowPushNotifications)
+        {
+            ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
+        }
         return false;
     }
 

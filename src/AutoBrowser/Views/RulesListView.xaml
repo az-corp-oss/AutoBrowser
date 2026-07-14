@@ -2,6 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
     <Grid>
         <!-- Rule list -->
         <ui:ListView x:Name="RuleListView"
@@ -30,13 +33,13 @@
                                       VerticalAlignment="Top" Margin="0,2,12,0"/>
 
                             <StackPanel Grid.Column="1">
-                                <!-- Row 1: Rule name + browser -->
+                                <!-- Row 1: Rule name + browser/action -->
                                 <StackPanel Orientation="Horizontal">
                                     <ui:TextBlock FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Name}" AutomationProperties.AutomationId="RuleNameText"/>
                                     <ui:TextBlock Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text=" — "/>
-                                    <ui:TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding BrowserDisplayName}"/>
-                                    <ui:TextBlock Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text=" — "/>
-                                    <ui:TextBlock MaxWidth="300" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding BrowserPath}" TextTrimming="CharacterEllipsis"/>
+                                    <ui:TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding DisplayActionOrBrowser}"/>
+                                    <ui:TextBlock Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text=" — " Visibility="{Binding IsForward, Converter={StaticResource BoolToVis}}"/>
+                                    <ui:TextBlock MaxWidth="300" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding BrowserPath}" TextTrimming="CharacterEllipsis" Visibility="{Binding IsForward, Converter={StaticResource BoolToVis}}"/>
                                 </StackPanel>
 
                                 <!-- Row 2: Sequence + pattern -->

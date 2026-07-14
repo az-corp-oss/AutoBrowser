@@ -14,6 +14,7 @@ public partial class RoutingRule : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(BrowserDisplayName))]
+    [NotifyPropertyChangedFor(nameof(DisplayActionOrBrowser))]
     private string _browserPath = string.Empty;
 
     [ObservableProperty]
@@ -25,10 +26,32 @@ public partial class RoutingRule : ObservableObject
     [ObservableProperty]
     private int _sequence;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(BrowserDisplayName))]
+    [NotifyPropertyChangedFor(nameof(DisplayActionOrBrowser))]
+    [NotifyPropertyChangedFor(nameof(IsForward))]
+    private RoutingAction _action = RoutingAction.Forward;
+
+    public bool IsForward => Action == RoutingAction.Forward;
+
+    public string DisplayActionOrBrowser
+    {
+        get
+        {
+            if (Action == RoutingAction.Drop)
+                return "Drop";
+
+            return string.IsNullOrWhiteSpace(BrowserDisplayName) ? "Forward" : BrowserDisplayName;
+        }
+    }
+
     public string BrowserDisplayName
     {
         get
         {
+            if (Action == RoutingAction.Drop)
+                return string.Empty;
+
             if (string.IsNullOrWhiteSpace(BrowserPath))
                 return string.Empty;
 

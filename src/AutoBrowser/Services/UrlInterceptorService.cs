@@ -16,15 +16,15 @@ public class UrlInterceptorService
         _defaultBrowserService = defaultBrowserService;
     }
 
-    public string? TryRoute(string url, string? fallbackBrowserPath = null)
+    public RouteResult TryRoute(string url, string? fallbackBrowserPath = null)
     {
         Log.Information("TryRoute called with URL: {Url}", url);
 
         if (string.IsNullOrWhiteSpace(url))
         {
-            Log.Verbose("URL is null or whitespace, returning null");
-            Log.Information("TryRoute completed: null (null/whitespace URL)");
-            return null;
+            Log.Verbose("URL is null or whitespace, returning NoMatch");
+            Log.Information("TryRoute completed: NoMatch (null/whitespace URL)");
+            return new RouteResult(RouteResultType.NoMatch, null);
         }
 
         url = url.Trim();
@@ -46,10 +46,18 @@ public class UrlInterceptorService
                 continue;
             }
 
-            Log.Verbose("Rule '{RuleName}' matched, launching browser: {BrowserPath}", rule.Name, rule.BrowserPath);
-            LaunchBrowser(rule.BrowserPath, rule.BrowserArguments, url);
-            Log.Information("TryRoute completed: {Browser} (matched rule: {RuleName})", rule.BrowserDisplayName, rule.Name);
-            return rule.BrowserDisplayName;
+            if (rule.IsForward)
+            {
+                Log.Verbose("Rule '{RuleName}' matched, launching browser: {BrowserPath}", rule.Name, rule.BrowserPath);
+                LaunchBrowser(rule.BrowserPath, rule.BrowserArguments, url);
+                Log.Information("TryRoute completed: {Browser} (matched rule: {RuleName})", rule.BrowserDisplayName, rule.Name);
+                return new RouteResult(RouteResultType.Forwarded, rule.BrowserDisplayName, rule.Name);
+            }
+            else
+            {
+                Log.Information("Rule '{RuleName}' matched with Drop action. URL dropped: {Url}", rule.Name, url);
+                return new RouteResult(RouteResultType.Dropped, null, rule.Name);
+            }
         }
 
         Log.Verbose("No rules matched, checking fallback browser");
@@ -59,12 +67,12 @@ public class UrlInterceptorService
             LaunchBrowser(fallbackBrowserPath, "{url}", url);
             var displayName = ResolveBrowserDisplayName(fallbackBrowserPath);
             Log.Information("TryRoute completed: {Browser} (fallback)", displayName);
-            return displayName;
+            return new RouteResult(RouteResultType.Forwarded, displayName);
         }
 
         Log.Information("No rules matched and no fallback browser set for URL: {Url}", url);
-        Log.Information("TryRoute completed: null (no rules matched)");
-        return null;
+        Log.Information("TryRoute completed: NoMatch (no rules matched)");
+        return new RouteResult(RouteResultType.NoMatch, null);
     }
 
     private static string StripProtocolPrefix(string url)
