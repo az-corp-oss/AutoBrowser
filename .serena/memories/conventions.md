@@ -1,10 +1,9 @@
 # Conventions
 
-## Code Style
-- Use standard `using` directives at top of file, not fully qualified names in code.
-- Namespace aliases and global imports belong in `GlobalUsings.cs`.
+\1
+- **Error Handling**: Never use empty catch blocks `catch {}`. Avoid general catch blocks without handling or logging to prevent "Empty general catch clause suppresses any errors" warnings.
 
-## MVVM Pattern
+\2
 - Properties in Models and ViewModels inherit from `ObservableObject` or use `CommunityToolkit.Mvvm` source generators.
 - UI elements use data binding to ViewModel commands instead of code-behind events.
 

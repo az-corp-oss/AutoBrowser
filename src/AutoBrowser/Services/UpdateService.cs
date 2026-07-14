@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json.Serialization;
-using System.Windows;
 using Serilog;
 
 namespace AutoBrowser.Services;

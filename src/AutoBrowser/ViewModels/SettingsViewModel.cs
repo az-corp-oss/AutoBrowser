@@ -1,4 +1,3 @@
-using System.Windows;
 using AutoBrowser.Models;
 using AutoBrowser.Services;
 using CommunityToolkit.Mvvm.ComponentModel;

@@ -1,5 +1,4 @@
 using System.IO;
-using System.Threading;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using AutoBrowser.Models;

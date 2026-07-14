@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Windows;
 using AutoBrowser.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Serilog;

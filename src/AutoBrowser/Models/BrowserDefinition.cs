@@ -190,8 +190,7 @@ public class BrowserDefinition
                                           ?? appKey?.OpenSubKey("URLAssociations")?.GetValue("https") as string;
                     if (string.IsNullOrEmpty(capabilitiesUrl)) continue;
 
-                    using var commandKey = Registry.ClassesRoot.OpenSubKey(
-                        $@"{capabilitiesUrl}\shell\open\command");
+                    using var commandKey = Registry.ClassesRoot.OpenSubKey($@"{capabilitiesUrl}\shell\open\command");
                     var cmd = commandKey?.GetValue("") as string;
                     if (string.IsNullOrEmpty(cmd)) continue;
 
