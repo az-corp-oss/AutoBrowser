@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.IO;
-using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using FlaUI.UIA3;
 
@@ -18,10 +17,29 @@ public class AppLauncher : IDisposable
 
     public FlaUI.Core.Application Launch()
     {
+        if (_process != null && !_process.HasExited)
+        {
+            try
+            {
+                _process.Kill();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to kill process: {ex.Message}");
+            }
+        }
         // Kill any lingering instances that hold the mutex
         foreach (var proc in Process.GetProcessesByName("AutoBrowser"))
         {
-            try { proc.Kill(); proc.WaitForExit(2000); } catch { }
+            try 
+            { 
+                proc.Kill(); 
+                proc.WaitForExit(2000); 
+            } 
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to kill lingering process: {ex.Message}");
+            }
         }
         Thread.Sleep(500);
 
@@ -47,6 +65,7 @@ public class AppLauncher : IDisposable
         }
 
         var exePath = Path.Combine(_tempDir, "AutoBrowser.exe");
+        Console.WriteLine($"Launching test app at {exePath}");
 
         _process = Process.Start(new ProcessStartInfo
         {
@@ -54,6 +73,11 @@ public class AppLauncher : IDisposable
             Arguments = "--no-single-instance --no-update-check --no-re-register-prompt",
             UseShellExecute = false
         });
+
+        if (_process == null)
+        {
+            throw new InvalidOperationException("Failed to start AutoBrowser process.");
+        }
 
         _automation = new UIA3Automation();
         _app = FlaUI.Core.Application.Attach(_process);
@@ -88,7 +112,11 @@ public class AppLauncher : IDisposable
 
                 if (!dismissed) break;
             }
-            catch { break; }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to dismiss dialogs: {ex.Message}");
+                break;
+            }
         }
     }
 
@@ -102,7 +130,10 @@ public class AppLauncher : IDisposable
                 _process.WaitForExit(5000);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to kill process during dispose: {ex.Message}");
+        }
 
         _automation?.Dispose();
         _process?.Dispose();
@@ -112,6 +143,9 @@ public class AppLauncher : IDisposable
             if (_tempDir != null && Directory.Exists(_tempDir))
                 Directory.Delete(_tempDir, true);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to delete temp dir: {ex.Message}");
+        }
     }
 }

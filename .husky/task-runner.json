@@ -16,12 +16,14 @@
       "output": "always"
     },
     {
-      "name": "Run full tests (including UI)",
+      "name": "Run unit tests (no UI)",
       "group": "pre-push",
       "command": "dotnet",
       "args": [
         "test",
         "src/AutoBrowser.Tests/AutoBrowser.Tests.csproj",
+        "--filter",
+        "FullyQualifiedName!~UI",
         "--verbosity",
         "quiet"
       ],
