@@ -50,12 +50,26 @@ public partial class App
     {
         try
         {
-            using var icon = new NotifyIcon
+            var icon = new NotifyIcon
             {
                 Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? ""),
                 Visible = true
             };
             icon.ShowBalloonTip(3000, title, message, ToolTipIcon.Warning);
+            
+            // Keep icon alive for balloon tip to render, then dispose
+            _ = Task.Delay(4000).ContinueWith(_ =>
+            {
+                try
+                {
+                    icon.Visible = false;
+                    icon.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to dispose notification icon");
+                }
+            });
         }
         catch (Exception ex)
         {

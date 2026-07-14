@@ -70,6 +70,26 @@ public class SettingsViewModelTests
         // Assert
         Assert.NotNull(vm.AvailableBrowsers);
         Assert.True(vm.MinimizeToTray);
+        Assert.True(vm.ShowPushNotifications);
+    }
+
+
+    [Fact]
+    public void ShowPushNotifications_SetAndGet_WorksCorrectly()
+    {
+        var settings = new AppSettings { ShowPushNotifications = true };
+        _mockSettingsService.Setup(x => x.LoadSettings()).Returns(settings);
+
+        var vm = new SettingsViewModel(
+            _mockProtocolService.Object,
+            _mockDefaultBrowserService.Object,
+            _mockSettingsService.Object);
+
+        Assert.True(vm.ShowPushNotifications);
+
+        vm.ShowPushNotifications = false;
+        Assert.False(vm.ShowPushNotifications);
+        _mockSettingsService.Verify(x => x.SaveSettings(It.Is<AppSettings>(s => s.ShowPushNotifications == false)), Times.Once);
     }
 }
 

@@ -27,6 +27,8 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _closeToTray = true;
+    [ObservableProperty]
+    private bool _showPushNotifications = true;
 
     [ObservableProperty]
     private string _status = "Ready";
@@ -91,6 +93,7 @@ public partial class SettingsViewModel : ObservableObject
 
         _minimizeToTray = settings.MinimizeToTray;
         _closeToTray = settings.CloseToTray;
+        _showPushNotifications = settings.ShowPushNotifications;
 
         Initialize();
     }
@@ -147,5 +150,14 @@ public partial class SettingsViewModel : ObservableObject
         settings.CloseToTray = value;
         _settingsService.SaveSettings(settings);
         Status = value ? "Close to tray enabled" : "Close to tray disabled";
+    }
+
+    partial void OnShowPushNotificationsChanged(bool value)
+    {
+        Log.Debug("ShowPushNotifications changed to {Value}", value);
+        var settings = _settingsService.LoadSettings();
+        settings.ShowPushNotifications = value;
+        _settingsService.SaveSettings(settings);
+        Status = value ? "Push notifications enabled" : "Push notifications disabled";
     }
 }

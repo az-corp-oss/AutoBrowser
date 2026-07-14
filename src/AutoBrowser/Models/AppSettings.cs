@@ -7,6 +7,7 @@ public class AppSettings
     public string FallbackBrowserPath { get; set; } = string.Empty;
     public bool MinimizeToTray { get; set; } = true;
     public bool CloseToTray { get; set; } = true;
+    public bool ShowPushNotifications { get; set; } = true;
     public double WindowWidth { get; set; } = 1040;
     public double WindowHeight { get; set; } = 730;
     public double WindowLeft { get; set; } = -1;
