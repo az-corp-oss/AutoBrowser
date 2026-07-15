@@ -75,7 +75,10 @@ public partial class App
         Log.Debug("Window_StateChanged: WindowState={WindowState}, MinimizeToTray={MinimizeToTray}",
             _mainWindow.WindowState, settings.MinimizeToTray);
         if (_mainWindow.WindowState == WindowState.Minimized && settings.MinimizeToTray)
+        {
             _mainWindow.Hide();
+            ShowNotification("AutoBrowser", "Minimized to tray. Click here to restore the window.");
+        }
     }
 
     private void MainWindow_Closing(object? sender, CancelEventArgs e)
@@ -90,6 +93,7 @@ public partial class App
         {
             e.Cancel = true;
             _mainWindow.Hide();
+            ShowNotification("AutoBrowser", "Closed to tray. Click here to restore the window.");
         }
         else
         {

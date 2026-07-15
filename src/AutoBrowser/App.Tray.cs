@@ -21,6 +21,7 @@ public partial class App
 
         _trayIcon.ContextMenuStrip = menu;
         _trayIcon.DoubleClick += (_, _) => ShowWindow();
+        _trayIcon.BalloonTipClicked += (_, _) => ShowWindow();
 
         Log.Debug("Tray icon created and visible");
     }
@@ -46,30 +47,13 @@ public partial class App
         Current.Shutdown();
     }
 
-    private static void ShowNotification(string title, string message)
+    private void ShowNotification(string title, string message)
     {
         try
         {
-            var icon = new NotifyIcon
-            {
-                Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? ""),
-                Visible = true
-            };
-            icon.ShowBalloonTip(3000, title, message, ToolTipIcon.Warning);
-            
-            // Keep icon alive for balloon tip to render, then dispose
-            _ = Task.Delay(4000).ContinueWith(_ =>
-            {
-                try
-                {
-                    icon.Visible = false;
-                    icon.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning(ex, "Failed to dispose notification icon");
-                }
-            });
+            if (_trayIcon == null) return;
+            _trayIcon.ShowBalloonTip(3000, title, message, ToolTipIcon.Info);
+            Log.Debug("Balloon tip shown: {Title} - {Message}", title, message);
         }
         catch (Exception ex)
         {

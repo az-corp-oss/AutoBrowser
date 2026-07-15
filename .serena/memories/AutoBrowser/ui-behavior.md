@@ -17,10 +17,12 @@
 
 ## System Tray (Managed by App.xaml.cs)
 - `NotifyIcon` with app icon + context menu (Show Window, Exit)
-- Minimize → hides to tray (`MainWindow_StateChanged`) — when `MinimizeToTray` enabled
-- Close → minimizes to tray (cancel `MainWindow_Closing` event) — when `CloseToTray` enabled
+- Minimize → hides to tray + balloon tip + restore-on-click (`MainWindow_StateChanged`) — when `MinimizeToTray` enabled
+- Close → minimizes to tray + balloon tip + restore-on-click (cancel `MainWindow_Closing` event) — when `CloseToTray` enabled
+- Balloon tip click → `ShowWindow()` restores window (hooked via `_trayIcon.BalloonTipClicked`)
 - Only Exit menu item truly terminates
-- `SaveRules()` and `SaveWindowState()` called on close
+- `SaveWindowState()` called on close
+- `ShowNotification()` uses single `_trayIcon` (no per-call NotifyIcon) so `BalloonTipClicked` works
 - Both options persist to `Data/settings.json`
 
 ## Update Check
