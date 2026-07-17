@@ -33,11 +33,6 @@ public partial class App
         ApplyTheme(savedTheme);
 
         var vm = Services.GetRequiredService<MainViewModel>();
-        
-        var args = Environment.GetCommandLineArgs();
-        var forceUpdate = Array.Exists(args, arg => arg.Equals("--force-update-check", StringComparison.OrdinalIgnoreCase));
-        var skipUpdate = Array.Exists(args, arg => arg.Equals("--no-update-check", StringComparison.OrdinalIgnoreCase));
-        var skipReRegister = Array.Exists(args, arg => arg.Equals("--no-re-register-prompt", StringComparison.OrdinalIgnoreCase));
 
         if (_mainWindow == null) return;
 
@@ -47,23 +42,22 @@ public partial class App
             // Give extra frame time for full visual layout stability
             await Task.Delay(200);
 
-            if (!skipUpdate)
+            if (!_parsedArgs.SkipUpdate)
             {
                 // Run silent update check first
-                await vm.StartSilentUpdateCheckAsync(forceUpdate);
+                await vm.StartSilentUpdateCheckAsync(_parsedArgs.ForceUpdate);
             }
-            
-            if (!skipReRegister)
+
+            if (!_parsedArgs.SkipReRegister)
             {
                 // Then prompt path re-registration
                 await CheckAndPromptReRegister();
             }
-            
-            var url = Array.Find(args, IsUrl);
-            if (url != null)
+
+            if (_parsedArgs.Url != null)
             {
-                Log.Debug("Command-line URL argument: {Url}", url);
-                ProcessUrl(url);
+                Log.Debug("Command-line URL argument: {Url}", _parsedArgs.Url);
+                ProcessUrl(_parsedArgs.Url);
             }
         };
     }

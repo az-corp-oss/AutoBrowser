@@ -28,6 +28,7 @@ public partial class App : Application
 
     private NotifyIcon? _trayIcon;
     private bool _isExiting;
+    private ParsedArgs _parsedArgs = null!;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -66,27 +67,28 @@ public partial class App : Application
 
         base.OnStartup(e);
 
-        // Extract URL arg once — used for early routing and later pipe signaling
-        var urlArg = Array.Find(e.Args, IsUrl);
-        if (urlArg != null)
+        // Parse command-line arguments once
+        _parsedArgs = ParseArgs(e.Args);
+        
+        // Use parsed URL for early routing and later pipe signaling
+        if (_parsedArgs.Url != null)
         {
-            Log.Debug("URL argument received: {Url}", urlArg);
-            if (TryRouteUrl(urlArg))
+            Log.Debug("URL argument received: {Url}", _parsedArgs.Url);
+            if (TryRouteUrl(_parsedArgs.Url))
             {
                 Shutdown();
                 return;
             }
         }
 
-        var skipMutex = Array.Exists(e.Args, arg => arg.Equals("--no-single-instance", StringComparison.OrdinalIgnoreCase));
-        if (!skipMutex)
+        if (!_parsedArgs.SkipSingleInstance)
         {
             // Single-instance guard: if already running, signal it and exit
             _mutex = new Mutex(true, MutexName, out var isNewInstance);
             if (!isNewInstance)
             {
                 Log.Information("Another instance detected, signaling via pipe");
-                SingleInstanceService.SignalExistingInstance(urlArg);
+                SingleInstanceService.SignalExistingInstance(_parsedArgs.Url);
                 _mutex.Dispose();
                 _mutex = null;
                 Shutdown();
@@ -101,7 +103,7 @@ public partial class App : Application
 
         ShowMainWindow();
 
-        if (!skipMutex)
+        if (!_parsedArgs.SkipSingleInstance)
         {
             StartPipeServer();
         }
