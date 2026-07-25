@@ -11,10 +11,17 @@ namespace AutoBrowser.Services;
 
 public class UpdateService
 {
-    private static readonly HttpClient Http = new()
+    private static readonly HttpClient DefaultHttp = new()
     {
         DefaultRequestHeaders = { { "User-Agent", "AutoBrowser" } }
     };
+
+    private readonly HttpClient _http;
+
+    public UpdateService(HttpClient? httpClient = null)
+    {
+        _http = httpClient ?? DefaultHttp;
+    }
 
     private const string Repo = "azhe403/AutoBrowser";
     private const string ReleasesUrl = $"https://api.github.com/repos/{Repo}/releases?per_page=10";
@@ -24,7 +31,7 @@ public class UpdateService
         try
         {
             Log.Information("Checking for updates from {Url}", ReleasesUrl);
-            var resp = await Http.GetAsync(ReleasesUrl, ct);
+            var resp = await _http.GetAsync(ReleasesUrl, ct);
 
             if (resp.StatusCode == HttpStatusCode.NotFound)
             {
@@ -89,7 +96,7 @@ public class UpdateService
         Directory.CreateDirectory(workspace);
 
         var zipPath = Path.Combine(workspace, "update.zip");
-        using (var resp = await Http.GetAsync(asset.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, ct))
+        using (var resp = await _http.GetAsync(asset.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, ct))
         {
             resp.EnsureSuccessStatusCode();
             var total = resp.Content.Headers.ContentLength ?? -1;
