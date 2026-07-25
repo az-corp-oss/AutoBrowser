@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using AutoBrowser.Models;
 using AutoBrowser.Services;
 using AutoBrowser.ViewModels;
@@ -19,21 +20,31 @@ public class HomeViewModelTests
         _mockSettingsService = new Mock<ISettingsService>();
         _mockDialogService = new Mock<IDialogService>();
 
-        _mockRuleService.Setup(x => x.LoadRules()).Returns(new List<RoutingRule>());
+        _mockRuleService.Setup(x => x.LoadGroups()).Returns(new List<RuleGroup>());
         _mockSettingsService.Setup(x => x.LoadSettings()).Returns(new AppSettings());
         _mockDialogService.Setup(x => x.ShowAddRuleDialog()).Returns((RoutingRule?)null);
         _mockDialogService.Setup(x => x.ShowEditRuleDialog(It.IsAny<RoutingRule>())).Returns((RoutingRule?)null);
     }
 
     [Fact]
-    public void Constructor_LoadsRules()
+    public void Constructor_LoadsGroups()
     {
         // Arrange
-        var rules = new List<RoutingRule>
+        var groups = new List<RuleGroup>
         {
-            new() { Name = "Rule 1", UrlPattern = "example.com", IsEnabled = true, Sequence = 1 }
+            new() 
+            { 
+                Id = "g1", 
+                Name = "Default", 
+                IsEnabled = true, 
+                Sequence = 1,
+                Rules = new ObservableCollection<RoutingRule>
+                {
+                    new() { Name = "Rule 1", UrlPattern = "example.com", IsEnabled = true, Sequence = 1 }
+                }
+            }
         };
-        _mockRuleService.Setup(x => x.LoadRules()).Returns(rules);
+        _mockRuleService.Setup(x => x.LoadGroups()).Returns(groups);
 
         // Act
         var vm = new HomeViewModel(

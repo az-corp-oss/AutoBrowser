@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using AutoBrowser.Helpers;
 using AutoBrowser.Models;
 using AutoBrowser.Services;
 using AutoBrowser.Views;
@@ -17,16 +18,22 @@ public partial class HomeViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly IDialogService _dialogService;
     private readonly UpdateService _updateService = new();
+    private bool _isSyncing;
+    private readonly Dictionary<RoutingRule, RuleGroup> _ruleGroupMap = new();
 
+    public ObservableCollection<RuleGroup> Groups { get; } = [];
     public ObservableCollection<RoutingRule> Rules { get; } = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedRule))]
+    [NotifyPropertyChangedFor(nameof(HasSelectedGroup))]
+    [NotifyPropertyChangedFor(nameof(SelectedRule))]
+    [NotifyPropertyChangedFor(nameof(SelectedGroup))]
     [NotifyCanExecuteChangedFor(nameof(EditRuleCommand))]
     [NotifyCanExecuteChangedFor(nameof(DeleteRuleCommand))]
     [NotifyCanExecuteChangedFor(nameof(MoveUpCommand))]
     [NotifyCanExecuteChangedFor(nameof(MoveDownCommand))]
-    private RoutingRule? _selectedRule;
+    private object? _selectedItem;
 
     [ObservableProperty]
     private string _status = "Ready";
@@ -42,7 +49,20 @@ public partial class HomeViewModel : ObservableObject
     [ObservableProperty]
     private string _updateStatus = "";
 
+    public RuleGroup? SelectedGroup
+    {
+        get => SelectedItem as RuleGroup;
+        set => SelectedItem = value;
+    }
+
+    public RoutingRule? SelectedRule
+    {
+        get => SelectedItem as RoutingRule;
+        set => SelectedItem = value;
+    }
+
     public bool HasSelectedRule => SelectedRule is not null;
+    public bool HasSelectedGroup => SelectedGroup is not null;
     public bool CanCheckForUpdate => !IsCheckingUpdate && !IsDownloadingUpdate;
 
     public HomeViewModel(
@@ -56,7 +76,13 @@ public partial class HomeViewModel : ObservableObject
         _settingsService = settingsService;
         _dialogService = dialogService;
 
-        LoadRules();
+        LoadGroups();
+
+        Groups.CollectionChanged += Groups_CollectionChanged;
+        foreach (var group in Groups)
+        {
+            SubscribeToGroupEvents(group);
+        }
 
         Rules.CollectionChanged += Rules_CollectionChanged;
         foreach (var rule in Rules)
@@ -65,38 +91,242 @@ public partial class HomeViewModel : ObservableObject
         }
     }
 
+    private void Groups_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (_isSyncing) return;
+
+        _isSyncing = true;
+        try
+        {
+            if (e.OldItems is not null)
+            {
+                foreach (RuleGroup group in e.OldItems)
+                {
+                    UnsubscribeFromGroupEvents(group);
+                    if (SelectedItem == group)
+                    {
+                        SelectedItem = null;
+                    }
+                    foreach (var rule in group.Rules)
+                    {
+                        rule.PropertyChanged -= Rule_PropertyChanged;
+                        if (SelectedItem == rule)
+                        {
+                            SelectedItem = null;
+                        }
+                        Rules.Remove(rule);
+                        _ruleGroupMap.Remove(rule);
+                    }
+                }
+            }
+
+            if (e.NewItems is not null)
+            {
+                foreach (RuleGroup group in e.NewItems)
+                {
+                    SubscribeToGroupEvents(group);
+                    foreach (var rule in group.Rules)
+                    {
+                        rule.PropertyChanged += Rule_PropertyChanged;
+                        Rules.Add(rule);
+                        _ruleGroupMap[rule] = group;
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _isSyncing = false;
+        }
+
+        SaveGroups();
+    }
+
+    private void SubscribeToGroupEvents(RuleGroup group)
+    {
+        group.PropertyChanged += Group_PropertyChanged;
+        group.Rules.CollectionChanged += GroupRules_CollectionChanged;
+    }
+
+    private void UnsubscribeFromGroupEvents(RuleGroup group)
+    {
+        group.PropertyChanged -= Group_PropertyChanged;
+        group.Rules.CollectionChanged -= GroupRules_CollectionChanged;
+    }
+
+    private void Group_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        SaveGroups();
+    }
+
+    private void GroupRules_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (_isSyncing) return;
+
+        _isSyncing = true;
+        try
+        {
+            if (e.OldItems is not null)
+            {
+                foreach (RoutingRule rule in e.OldItems)
+                {
+                    rule.PropertyChanged -= Rule_PropertyChanged;
+                }
+            }
+
+            RebuildFlatRules();
+        }
+        finally
+        {
+            _isSyncing = false;
+        }
+
+        SaveGroups();
+    }
+
+    private void RebuildFlatRules()
+    {
+        // Unsubscribe all current rules first to avoid memory leaks
+        foreach (var rule in Rules)
+        {
+            rule.PropertyChanged -= Rule_PropertyChanged;
+        }
+
+        Rules.Clear();
+        _ruleGroupMap.Clear();
+
+        foreach (var group in Groups)
+        {
+            foreach (var rule in group.Rules)
+            {
+                Rules.Add(rule);
+                _ruleGroupMap[rule] = group;
+                rule.PropertyChanged += Rule_PropertyChanged;
+            }
+        }
+    }
+
     private void Rules_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (e.OldItems is not null)
+        if (_isSyncing) return;
+
+        _isSyncing = true;
+        try
         {
-            foreach (RoutingRule rule in e.OldItems)
-                rule.PropertyChanged -= Rule_PropertyChanged;
+            if (e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                foreach (var rule in _ruleGroupMap.Keys)
+                {
+                    rule.PropertyChanged -= Rule_PropertyChanged;
+                }
+                if (SelectedItem is RoutingRule)
+                {
+                    SelectedItem = null;
+                }
+                foreach (var group in Groups)
+                    group.Rules.Clear();
+                _ruleGroupMap.Clear();
+            }
+            else
+            {
+                if (e.OldItems is not null)
+                {
+                    foreach (RoutingRule rule in e.OldItems)
+                    {
+                        rule.PropertyChanged -= Rule_PropertyChanged;
+                        if (SelectedItem == rule)
+                        {
+                            SelectedItem = null;
+                        }
+                        if (_ruleGroupMap.TryGetValue(rule, out var group))
+                        {
+                            group.Rules.Remove(rule);
+                            _ruleGroupMap.Remove(rule);
+                        }
+                    }
+                }
+
+                if (e.NewItems is not null)
+                {
+                    var targetGroup = Groups.FirstOrDefault();
+                    if (targetGroup == null)
+                    {
+                        targetGroup = new RuleGroup 
+                        { 
+                            Id = UlidHelper.NewUlid(), 
+                            Name = "Default", 
+                            IsEnabled = true, 
+                            Sequence = 1 
+                        };
+                        Groups.Add(targetGroup);
+                    }
+
+                    foreach (RoutingRule rule in e.NewItems)
+                    {
+                        rule.PropertyChanged += Rule_PropertyChanged;
+                        targetGroup.Rules.Add(rule);
+                        _ruleGroupMap[rule] = targetGroup;
+                    }
+                }
+
+                if (e.Action == NotifyCollectionChangedAction.Move)
+                {
+                    foreach (var group in Groups)
+                    {
+                        var groupRulesOrdered = Rules.Where(r => _ruleGroupMap.TryGetValue(r, out var g) && g == group).ToList();
+                        group.Rules.Clear();
+                        foreach (var r in groupRulesOrdered)
+                        {
+                            group.Rules.Add(r);
+                        }
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _isSyncing = false;
         }
 
-        if (e.NewItems is not null)
-        {
-            foreach (RoutingRule rule in e.NewItems)
-                rule.PropertyChanged += Rule_PropertyChanged;
-        }
-
-        SaveRules();
+        SaveGroups();
     }
 
     private void Rule_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        SaveRules();
+        SaveGroups();
     }
 
-    private void LoadRules()
+    private void LoadGroups()
     {
+        _isSyncing = true;
+        Groups.Clear();
         Rules.Clear();
-        foreach (var rule in _ruleService.LoadRules())
-            Rules.Add(rule);
+        _ruleGroupMap.Clear();
+
+        var groups = _ruleService.LoadGroups();
+        foreach (var group in groups)
+        {
+            Groups.Add(group);
+            foreach (var rule in group.Rules)
+            {
+                Rules.Add(rule);
+                _ruleGroupMap[rule] = group;
+            }
+        }
+        _isSyncing = false;
     }
 
-    private void SaveRules()
+    private void SaveGroups()
     {
-        _ruleService.SaveRules([..Rules]);
+        _ruleService.SaveGroups([..Groups]);
+    }
+
+    private void UpdateGroupSequences(RuleGroup group)
+    {
+        for (int i = 0; i < group.Rules.Count; i++)
+        {
+            group.Rules[i].Sequence = i + 1;
+        }
     }
 
     [RelayCommand]
@@ -105,9 +335,35 @@ public partial class HomeViewModel : ObservableObject
         var rule = _dialogService.ShowAddRuleDialog();
         if (rule != null)
         {
-            Rules.Add(rule);
-            SelectedRule = rule;
-            SaveRules();
+            var targetGroup = SelectedGroup ?? Groups.FirstOrDefault();
+            if (targetGroup == null)
+            {
+                targetGroup = new RuleGroup 
+                { 
+                    Id = UlidHelper.NewUlid(), 
+                    Name = "Default", 
+                    IsEnabled = true, 
+                    Sequence = 1 
+                };
+                Groups.Add(targetGroup);
+            }
+
+            _isSyncing = true;
+            try
+            {
+                targetGroup.Rules.Add(rule);
+                UpdateGroupSequences(targetGroup);
+                Rules.Add(rule);
+                _ruleGroupMap[rule] = targetGroup;
+                rule.PropertyChanged += Rule_PropertyChanged;
+            }
+            finally
+            {
+                _isSyncing = false;
+            }
+
+            SelectedItem = rule;
+            SaveGroups();
             Status = $"Rule \"{rule.Name}\" added";
         }
     }
@@ -116,13 +372,36 @@ public partial class HomeViewModel : ObservableObject
     private void EditRule()
     {
         if (SelectedRule is null) return;
-        var index = Rules.IndexOf(SelectedRule);
-        var rule = _dialogService.ShowEditRuleDialog(SelectedRule);
+        
+        var group = Groups.FirstOrDefault(g => g.Rules.Contains(SelectedRule));
+        if (group == null) return;
+
+        var index = group.Rules.IndexOf(SelectedRule);
+        var oldRule = SelectedRule;
+        var rule = _dialogService.ShowEditRuleDialog(oldRule);
         if (rule != null)
         {
-            Rules[index] = rule;
-            SelectedRule = rule;
-            SaveRules();
+            oldRule.PropertyChanged -= Rule_PropertyChanged;
+            _isSyncing = true;
+            try
+            {
+                var flatIndex = Rules.IndexOf(oldRule);
+                if (flatIndex >= 0)
+                {
+                    Rules[flatIndex] = rule;
+                }
+                group.Rules[index] = rule;
+                _ruleGroupMap.Remove(oldRule);
+                _ruleGroupMap[rule] = group;
+                rule.PropertyChanged += Rule_PropertyChanged;
+            }
+            finally
+            {
+                _isSyncing = false;
+            }
+
+            SelectedItem = rule;
+            SaveGroups();
             Status = $"Rule \"{rule.Name}\" updated";
         }
     }
@@ -132,9 +411,29 @@ public partial class HomeViewModel : ObservableObject
     {
         if (SelectedRule is null) return;
         var name = SelectedRule.Name;
-        Rules.Remove(SelectedRule);
-        SaveRules();
-        Status = $"Rule \"{name}\" deleted";
+        var rule = SelectedRule;
+        
+        var group = Groups.FirstOrDefault(g => g.Rules.Contains(rule));
+        if (group != null)
+        {
+            rule.PropertyChanged -= Rule_PropertyChanged;
+            _isSyncing = true;
+            try
+            {
+                group.Rules.Remove(rule);
+                UpdateGroupSequences(group);
+                Rules.Remove(rule);
+                _ruleGroupMap.Remove(rule);
+            }
+            finally
+            {
+                _isSyncing = false;
+            }
+
+            SelectedItem = null;
+            SaveGroups();
+            Status = $"Rule \"{name}\" deleted";
+        }
     }
 
     [RelayCommand(CanExecute = nameof(HasSelectedRule))]
@@ -146,12 +445,33 @@ public partial class HomeViewModel : ObservableObject
     private void MoveRule(int direction)
     {
         if (SelectedRule is null) return;
-        var index = Rules.IndexOf(SelectedRule);
-        var newIndex = index + direction;
-        if (newIndex < 0 || newIndex >= Rules.Count) return;
+        
+        var group = Groups.FirstOrDefault(g => g.Rules.Contains(SelectedRule));
+        if (group == null) return;
 
-        Rules.Move(index, newIndex);
-        SaveRules();
+        var index = group.Rules.IndexOf(SelectedRule);
+        var newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= group.Rules.Count) return;
+
+        _isSyncing = true;
+        try
+        {
+            group.Rules.Move(index, newIndex);
+            UpdateGroupSequences(group);
+            
+            var flatIndex = Rules.IndexOf(SelectedRule);
+            var newFlatIndex = flatIndex + direction;
+            if (newFlatIndex >= 0 && newFlatIndex < Rules.Count)
+            {
+                Rules.Move(flatIndex, newFlatIndex);
+            }
+        }
+        finally
+        {
+            _isSyncing = false;
+        }
+
+        SaveGroups();
         Status = $"Rule \"{SelectedRule.Name}\" moved";
     }
 

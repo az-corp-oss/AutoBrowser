@@ -25,13 +25,13 @@
 
         <!-- Scrollable Content -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
-            <StackPanel Margin="24,16,24,80">
+            <DockPanel Margin="24,16,24,80" LastChildFill="True">
                 <!-- Toolbar -->
-                <views:ToolbarView Margin="0,0,0,12"/>
+                <views:ToolbarView DockPanel.Dock="Top" Margin="0,0,0,12"/>
 
                 <!-- Rule List -->
                 <views:RulesListView Margin="0,0,0,8"/>
-            </StackPanel>
+            </DockPanel>
         </ScrollViewer>
     </Grid>
 </Page>
