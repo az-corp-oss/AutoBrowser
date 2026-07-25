@@ -23,6 +23,7 @@
 - Cleaned up fully-qualified names globally, centralizing aliases in `GlobalUsings.cs`.
 - Resolved double-click edit bubble issues and dynamic command enabling (`CanExecute`).
 - Improved startup sequence to avoid overlapping dialog boxes.
+- Fixed rule reordering sequence persistence so rule positions (from Move Up / Down actions) are written to `rules.json` and persist on restart.
 
 ## Tests & CI
 - Added FlaUI integration UI test for adding, editing and deleting rules (`MainWindow_AddRule_FillForm_Save`, `MainWindow_EditRule_FillForm_Save`, `MainWindow_DeleteRule`). Note: FlaUI requires desktop session; it fails in headless CI.

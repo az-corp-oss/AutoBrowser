@@ -11,8 +11,9 @@
 - **Dependency Injection**: `Microsoft.Extensions.DependencyInjection`
 
 ## Libraries
-- **Logging**: Serilog (structured logging to file)
+- **Logging**: Serilog (structured logging to file and console)
+- **CLI Parsing**: `System.CommandLine` (beta4)
 
 ## Build
 - **Project Format**: SDK-style (`net10.0-windows`)
-- **Updater**: Standalone single-file console app (`PublishSingleFile=true`) built via MSBuild task.
+- **Updater**: Standalone single-file console app built via MSBuild task.

@@ -108,7 +108,7 @@ See `workflow/sync-memory` for details. Use `AutoBrowser/changes/YYYY-MM/YYYY-MM
 
 After **any** code or XAML change, run this sequence to confirm the app starts without crash:
 
-0. Tests: `dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj`
+0. Tests: `dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj`
 1. Build: `dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging`
 2. Launch, wait 15s, close:
    ```powershell

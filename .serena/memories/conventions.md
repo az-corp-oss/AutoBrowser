@@ -1,11 +1,9 @@
 # Conventions
 
-\1
-- **Error Handling**: Never use empty catch blocks `catch {}`. Avoid general catch blocks without handling or logging to prevent "Empty general catch clause suppresses any errors" warnings.
-
-\2
-- Properties in Models and ViewModels inherit from `ObservableObject` or use `CommunityToolkit.Mvvm` source generators.
-- UI elements use data binding to ViewModel commands instead of code-behind events.
+## General
+- **Error Handling**: Never use empty catch blocks `catch {}`. Avoid general catch blocks without handling or logging.
+- **Properties**: In Models and ViewModels, inherit from `ObservableObject` or use `CommunityToolkit.Mvvm` source generators.
+- **UI Interaction**: Use data binding to ViewModel commands instead of code-behind events.
 
 ## WPF UI Conventions
 - **Typography Rule**: `ui:TextBlock` with `FontTypography` MUST specify an explicit `Foreground` brush binding (e.g. `Foreground="{DynamicResource TextFillColorPrimaryBrush}"`), otherwise it defaults to black in dark mode.
@@ -13,8 +11,8 @@
 - **Dialogs**: Use WPF UI `MessageBox` with `ShowDialogAsync()` instead of `System.Windows.MessageBox`.
 
 ## Testing
-- UI tests (FlaUI) require active desktop environment. Running headless (like CI/SSH without desktop session) causes `GetMainWindow()` to return null/fail. Run `HomeViewModelRuleTests` unit tests under headless environments.
-- **WPF UI Controls**: Add `AutomationProperties.AutomationId` to `ui:TextBox`/`ui:Button` for FlaUI testability — `x:Name` alone is not exposed as AutomationId.
+- **Headless Environments**: UI tests (FlaUI) require an active desktop. Running headless causes `GetMainWindow()` to return null. Use `HomeViewModelRuleTests` for headless.
+- **WPF UI Controls**: Add `AutomationProperties.AutomationId` to `ui:TextBox`/`ui:Button` for FlaUI testability (`x:Name` is not enough).
 - **Git Hooks**: Husky.NET enforces unit tests on `git commit`. Manual trigger: `dotnet husky run --group pre-commit`.
 
 ## Logging Hierarchy
@@ -22,4 +20,4 @@
 - `Debug` - Intermediate steps, variable values, branch conditions.
 - `Verbose` - Iterations, fine-grained details.
 - `Error` - Exceptions.
-- Serilog uses `Verbose` (not `Trace`).
+- **Note**: Serilog uses `Verbose` (not `Trace`).

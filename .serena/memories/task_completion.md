@@ -2,7 +2,7 @@
 
 ## Verification Protocol
 1. **Run Unit Tests**:
-   `dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj`
+   `dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj`
 2. **Run Unit Tests via Husky (simulates pre-commit)**:
    `dotnet husky run --group pre-commit`
 3. **Build Staging**:

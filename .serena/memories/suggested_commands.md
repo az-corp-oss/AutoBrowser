@@ -8,9 +8,9 @@
 - **Run project**:
   `dotnet run --project src\AutoBrowser\AutoBrowser.csproj`
 - **Run unit tests (full)**:
-  `dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj`
+  `dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj`
 - **Run unit tests (no UI)**:
-  `dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj --filter "FullyQualifiedName!~UI"`
+  `dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj --filter "FullyQualifiedName!~UI"`
 - **Run husky pre-commit hook manually**:
   `dotnet husky run --group pre-commit`
 - **Restore husky tools (after clone)**:

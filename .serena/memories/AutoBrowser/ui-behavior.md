@@ -64,4 +64,4 @@
 - **Full build (kills app)**: `dotnet build src\AutoBrowser\AutoBrowser.csproj` — only when intentionally overwriting the running binary
 - **Run**: `dotnet run --project src\AutoBrowser\AutoBrowser.csproj` or run EXE directly
 - **Post-change ritual**: verify with `bin\staging` first (no kill), then exit app and run fresh copy
-- **Tests**: `dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj` (44 tests)
+- **Tests**: `dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj` (44 tests)
