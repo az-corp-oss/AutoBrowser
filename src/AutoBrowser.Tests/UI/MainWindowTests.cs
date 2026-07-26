@@ -1,7 +1,6 @@
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using FlaUI.Core.Tools;
-using Xunit;
 
 namespace AutoBrowser.Tests.UI;
 

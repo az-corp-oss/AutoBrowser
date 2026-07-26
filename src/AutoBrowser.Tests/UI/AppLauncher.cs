@@ -2,8 +2,6 @@ using System.Diagnostics;
 using System.IO;
 using FlaUI.Core.Definitions;
 using FlaUI.UIA3;
-using System.Threading;
-using System.Linq;
 
 namespace AutoBrowser.Tests.UI;
 

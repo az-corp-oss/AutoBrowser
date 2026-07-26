@@ -1,5 +1,4 @@
 using AutoBrowser.Helpers;
-using Xunit;
 
 namespace AutoBrowser.Tests.Helpers;
 
