@@ -12,7 +12,7 @@ namespace AutoBrowser;
 
 public partial class App : Application
 {
-    private const string MutexName = "AutoBrowser-SingleInstance";
+    private const string MutexName = Constants.MutexName;
 
     public static IServiceProvider Services { get; private set; } = null!;
 
@@ -20,6 +20,9 @@ public partial class App : Application
     private IProtocolService _protocolService = null!;
     private IDefaultBrowserService _defaultBrowserService = null!;
     private IRuleService _ruleService = null!;
+    private IBrowserProvider _browserProvider = null!;
+    private INotificationService _notificationService = null!;
+    private IEnumerable<IBrowserLauncher> _launchers = null!;
 
     private SingleInstanceService? _singleInstanceService;
     private MainWindow? _mainWindow;
@@ -48,6 +51,12 @@ public partial class App : Application
         services.AddSingleton<IDefaultBrowserService, DefaultBrowserService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<IBrowserProvider, WindowsBrowserProvider>();
+        services.AddSingleton<IBrowserLauncher, EdgeBrowserLauncher>();
+        services.AddSingleton<IBrowserLauncher, FirefoxBrowserLauncher>();
+        services.AddSingleton<IBrowserLauncher, GenericBrowserLauncher>();
+        services.AddSingleton<INotificationService, NotificationService>();
+        services.AddSingleton<UpdateService>(sp => new UpdateService());
         services.AddTransient<MainViewModel>();
         services.AddTransient<HomeViewModel>();
         services.AddTransient<SettingsViewModel>();
@@ -64,12 +73,15 @@ public partial class App : Application
         _protocolService = Services.GetRequiredService<IProtocolService>();
         _defaultBrowserService = Services.GetRequiredService<IDefaultBrowserService>();
         _ruleService = Services.GetRequiredService<IRuleService>();
+        _browserProvider = Services.GetRequiredService<IBrowserProvider>();
+        _notificationService = Services.GetRequiredService<INotificationService>();
+        _launchers = Services.GetServices<IBrowserLauncher>();
 
         base.OnStartup(e);
 
         // Parse command-line arguments once
         _parsedArgs = ParseArgs(e.Args);
-        
+
         // Use parsed URL for early routing and later pipe signaling
         if (_parsedArgs.Url != null)
         {

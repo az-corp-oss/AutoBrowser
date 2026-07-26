@@ -42,22 +42,8 @@ public partial class App
         SaveWindowState();
         _isExiting = true;
         _trayIcon?.Dispose();
-        
+
         // Force the app to shutdown immediately without relying on MainWindow.Closing routing
         Current.Shutdown();
-    }
-
-    private void ShowNotification(string title, string message)
-    {
-        try
-        {
-            if (_trayIcon == null) return;
-            _trayIcon.ShowBalloonTip(3000, title, message, ToolTipIcon.Info);
-            Log.Debug("Balloon tip shown: {Title} - {Message}", title, message);
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Failed to show notification");
-        }
     }
 }

@@ -169,14 +169,14 @@ public partial class App
             };
             dialog.Owner = _mainWindow;
             var result = await dialog.ShowDialogAsync();
-        
-        // When the MessageBox closes, WPF may drop Window focus, causing ExtendsContentIntoTitleBar 
-        // dragging to fail until user clicks the client area. We force focus back to the MainWindow 
-        // to restore standard Windows drag behavior.
-        if (_mainWindow != null && _mainWindow.IsLoaded)
-        {
-            _mainWindow.Focus();
-        }
+
+            // When the MessageBox closes, WPF may drop Window focus, causing ExtendsContentIntoTitleBar 
+            // dragging to fail until user clicks the client area. We force focus back to the MainWindow 
+            // to restore standard Windows drag behavior.
+            if (_mainWindow != null && _mainWindow.IsLoaded)
+            {
+                _mainWindow.Focus();
+            }
 
             if (result == Wpf.Ui.Controls.MessageBoxResult.Primary)
             {
@@ -193,7 +193,7 @@ public partial class App
                     Log.Information("Default browser registration updated");
                 }
 
-                ShowNotification("AutoBrowser", "Registration updated successfully.");
+                _notificationService.Show("AutoBrowser", "Registration updated successfully.");
             }
             else
             {

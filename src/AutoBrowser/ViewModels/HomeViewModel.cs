@@ -17,7 +17,10 @@ public partial class HomeViewModel : ObservableObject
     private readonly IDefaultBrowserService _defaultBrowserService;
     private readonly ISettingsService _settingsService;
     private readonly IDialogService _dialogService;
-    private readonly UpdateService _updateService = new();
+    private readonly UpdateService _updateService;
+    private readonly IBrowserProvider _browserProvider;
+    private readonly INotificationService _notificationService;
+    private readonly IEnumerable<IBrowserLauncher> _launchers;
     private bool _isSyncing;
     private readonly Dictionary<RoutingRule, RuleGroup> _ruleGroupMap = new();
 
@@ -69,12 +72,20 @@ public partial class HomeViewModel : ObservableObject
         IRuleService ruleService,
         IDefaultBrowserService defaultBrowserService,
         ISettingsService settingsService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        UpdateService updateService,
+        IBrowserProvider browserProvider,
+        INotificationService notificationService,
+        IEnumerable<IBrowserLauncher> launchers)
     {
         _ruleService = ruleService;
         _defaultBrowserService = defaultBrowserService;
         _settingsService = settingsService;
         _dialogService = dialogService;
+        _updateService = updateService;
+        _browserProvider = browserProvider;
+        _notificationService = notificationService;
+        _launchers = launchers;
 
         LoadGroups();
 
@@ -251,12 +262,12 @@ public partial class HomeViewModel : ObservableObject
                     var targetGroup = Groups.FirstOrDefault();
                     if (targetGroup == null)
                     {
-                        targetGroup = new RuleGroup 
-                        { 
-                            Id = UlidHelper.NewUlid(), 
-                            Name = "Default", 
-                            IsEnabled = true, 
-                            Sequence = 1 
+                        targetGroup = new RuleGroup
+                        {
+                            Id = UlidHelper.NewUlid(),
+                            Name = "Default",
+                            IsEnabled = true,
+                            Sequence = 1
                         };
                         Groups.Add(targetGroup);
                     }
@@ -318,7 +329,7 @@ public partial class HomeViewModel : ObservableObject
 
     private void SaveGroups()
     {
-        _ruleService.SaveGroups([..Groups]);
+        _ruleService.SaveGroups([.. Groups]);
     }
 
     private void UpdateGroupSequences(RuleGroup group)
@@ -338,12 +349,12 @@ public partial class HomeViewModel : ObservableObject
             var targetGroup = SelectedGroup ?? Groups.FirstOrDefault();
             if (targetGroup == null)
             {
-                targetGroup = new RuleGroup 
-                { 
-                    Id = UlidHelper.NewUlid(), 
-                    Name = "Default", 
-                    IsEnabled = true, 
-                    Sequence = 1 
+                targetGroup = new RuleGroup
+                {
+                    Id = UlidHelper.NewUlid(),
+                    Name = "Default",
+                    IsEnabled = true,
+                    Sequence = 1
                 };
                 Groups.Add(targetGroup);
             }
@@ -372,7 +383,7 @@ public partial class HomeViewModel : ObservableObject
     private void EditRule()
     {
         if (SelectedRule is null) return;
-        
+
         var group = Groups.FirstOrDefault(g => g.Rules.Contains(SelectedRule));
         if (group == null) return;
 
@@ -412,7 +423,7 @@ public partial class HomeViewModel : ObservableObject
         if (SelectedRule is null) return;
         var name = SelectedRule.Name;
         var rule = SelectedRule;
-        
+
         var group = Groups.FirstOrDefault(g => g.Rules.Contains(rule));
         if (group != null)
         {
@@ -445,7 +456,7 @@ public partial class HomeViewModel : ObservableObject
     private void MoveRule(int direction)
     {
         if (SelectedRule is null) return;
-        
+
         var group = Groups.FirstOrDefault(g => g.Rules.Contains(SelectedRule));
         if (group == null) return;
 
@@ -458,7 +469,7 @@ public partial class HomeViewModel : ObservableObject
         {
             group.Rules.Move(index, newIndex);
             UpdateGroupSequences(group);
-            
+
             var flatIndex = Rules.IndexOf(SelectedRule);
             var newFlatIndex = flatIndex + direction;
             if (newFlatIndex >= 0 && newFlatIndex < Rules.Count)
@@ -484,7 +495,7 @@ public partial class HomeViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(url)) return;
 
         var settings = _settingsService.LoadSettings();
-        var interceptor = new UrlInterceptorService(_ruleService, _defaultBrowserService);
+        var interceptor = new UrlInterceptorService(_ruleService, _defaultBrowserService, _browserProvider, _launchers);
         var result = interceptor.TryRoute(url, settings.FallbackBrowserPath);
         if (result.Type == RouteResultType.Forwarded)
         {
@@ -492,7 +503,7 @@ public partial class HomeViewModel : ObservableObject
             if (settings.ShowPushNotifications)
             {
                 var msg = string.IsNullOrEmpty(result.RuleName) ? $"Routed via {result.BrowserDisplayName}:\n{url}" : $"Routed via {result.BrowserDisplayName} ({result.RuleName}):\n{url}";
-                ShowNotification("AutoBrowser", msg);
+                _notificationService.Show("AutoBrowser", msg);
             }
         }
         else if (result.Type == RouteResultType.Dropped)
@@ -501,7 +512,7 @@ public partial class HomeViewModel : ObservableObject
             if (settings.ShowPushNotifications)
             {
                 var msg = string.IsNullOrEmpty(result.RuleName) ? $"URL dropped by matching rule:\n{url}" : $"URL dropped by matching rule ({result.RuleName}):\n{url}";
-                ShowNotification("AutoBrowser", msg);
+                _notificationService.Show("AutoBrowser", msg);
             }
         }
         else
@@ -509,7 +520,7 @@ public partial class HomeViewModel : ObservableObject
             Status = $"No match: {url}";
             if (settings.ShowPushNotifications)
             {
-                ShowNotification("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
+                _notificationService.Show("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
             }
         }
     }
@@ -591,36 +602,5 @@ public partial class HomeViewModel : ObservableObject
         });
 
         await _updateService.DownloadAndUpdateAsync(release, progress);
-    }
-
-    private static void ShowNotification(string title, string message)
-    {
-        try
-        {
-            var icon = new NotifyIcon
-            {
-                Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? ""),
-                Visible = true
-            };
-            icon.ShowBalloonTip(3000, title, message, ToolTipIcon.Warning);
-            
-            // Keep icon alive for balloon tip to render, then dispose
-            _ = Task.Delay(4000).ContinueWith(_ =>
-            {
-                try
-                {
-                    icon.Visible = false;
-                    icon.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning(ex, "Failed to dispose notification icon");
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Failed to show notification");
-        }
     }
 }

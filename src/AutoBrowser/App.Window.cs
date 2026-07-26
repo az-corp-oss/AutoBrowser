@@ -71,7 +71,7 @@ public partial class App
         if (_mainWindow.WindowState == WindowState.Minimized && settings.MinimizeToTray)
         {
             _mainWindow.Hide();
-            ShowNotification("AutoBrowser", "Minimized to tray. Click here to restore the window.");
+            _notificationService.Show("AutoBrowser", "Minimized to tray. Click here to restore the window.");
         }
     }
 
@@ -87,7 +87,7 @@ public partial class App
         {
             e.Cancel = true;
             _mainWindow.Hide();
-            ShowNotification("AutoBrowser", "Closed to tray. Click here to restore the window.");
+            _notificationService.Show("AutoBrowser", "Closed to tray. Click here to restore the window.");
         }
         else
         {
