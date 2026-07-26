@@ -9,7 +9,7 @@ namespace AutoBrowser.ViewModels;
 public partial class AboutViewModel : ObservableObject
 {
     public string AppVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0.0";
-    
+
     [ObservableProperty]
     private string _status = "Ready";
 

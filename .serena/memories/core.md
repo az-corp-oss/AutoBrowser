@@ -1,25 +1,32 @@
-# Core
+# AutoBrowser — Core
+
+WPF desktop app (.NET 10) that routes URLs to browsers by regex rules.
 
 ## Source Map
-- `src/AutoBrowser/` - Main WPF application.
-  - `App.xaml / App.xaml.cs` - Entry point, DI container setup, single-instance mutex, tray icon.
-  - `MainWindow.xaml / .cs` - Main window, UI host (`NavigationView` root).
-  - `Models/` - Data models (`RoutingRule`, `AppSettings`, `BrowserDefinition`, `AppThemeMode`).
-  - `Services/` - Core logic (`RuleService`, `SettingsService`, `ProtocolService`, `DefaultBrowserService`, `UpdateService`, `UrlInterceptorService`).
-  - `ViewModels/` - UI state (`MainViewModel`, `HomeViewModel`, `SettingsViewModel`, `AboutViewModel`).
-  - `Views/` - Pages (`HomePage`, `SettingsPage`, `AboutPage`) and dialogs (`RuleEditorView`, `RuleTesterView`).
-- `src/AutoUpdater/` - Standalone updater executable.
-- `src/AutoBrowser.Tests/` - Unit tests.
-- `Data/` - Persistent storage (created at runtime next to EXE).
 
-## Architecture Invariants
-- **Dependency Injection**: Services and ViewModels are resolved from a central `ServiceProvider` initialized in `App.xaml.cs`.
-- **Portability**: All settings and rules are stored in JSON files within the `Data/` directory next to the executable. Do not use `%APPDATA%`.
-- **Registry Access**: Modifications are strictly limited to `HKCU` to avoid requiring admin privileges.
-- **Window Layout**: `MainWindow` uses `NavigationView` as its root. Pages handle their own scrolling.
+- `src/AutoBrowser/` — Main WPF application
+  - `App.xaml.cs` + partials — Entry point, DI, single-instance, pipe server, theme
+  - `Models/` — Data models (AppSettings, RoutingRule, BrowserDefinition)
+  - `Services/` — Business logic (RuleService, SettingsService, ProtocolService, UpdateService, UrlInterceptorService)
+  - `ViewModels/` — MVVM view models (Main, Home, Settings, About)
+  - `Views/` — XAML pages and dialogs
+  - `Helpers/` — Win32 P/Invoke utilities
+- `src/AutoUpdater/` — Standalone EXE for file swap + relaunch during updates
+- `src/AutoBrowser.Tests/` — xUnit tests (unit + FlaUI UI tests)
+- `docs/` — Project documentation
+
+## Invariants
+
+- Portable app: data stored in `Data/` folder next to EXE
+- Registry: HKCU only, no admin elevation
+- Single-instance via mutex; pipe server for URL dispatch
+- System tray app; minimizes on close
+- Protocol handler: `autobrowser://`
+- Always remove unused usings after changes (IDE0005)
 
 ## References
-- `mem:tech_stack` - Language, framework, and library versions.
-- `mem:suggested_commands` - Build, run, and test commands.
-- `mem:conventions` - Code style, WPF UI rules, and logging hierarchy.
-- `mem:task_completion` - Verification protocol for completed tasks.
+
+- Tech stack: `mem:tech_stack`
+- Commands: `mem:suggested_commands`
+- Conventions: `mem:conventions`
+- Task completion: `mem:task_completion`

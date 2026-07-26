@@ -1,23 +1,45 @@
 # Suggested Commands
 
-## Codebase Commands
-- **Verify compilation (non-destructive)**:
-  `dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging`
-- **Full build (destroys running app)**:
-  `dotnet build src\AutoBrowser\AutoBrowser.csproj`
-- **Run project**:
-  `dotnet run --project src\AutoBrowser\AutoBrowser.csproj`
-- **Run unit tests (full)**:
-  `dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj`
-- **Run unit tests (no UI)**:
-  `dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj --filter "FullyQualifiedName!~UI"`
-- **Run husky pre-commit hook manually**:
-  `dotnet husky run --group pre-commit`
-- **Restore husky tools (after clone)**:
-  `dotnet tool restore && dotnet husky install`
+## Build
 
-## Windows Registry Checks
-- **Read protocol command**:
-  `Get-ItemProperty -Path "HKCU:\Software\Classes\AutoBrowserLink\shell\open\command" -Name "(default)"`
-- **Write fake registry path (testing prompt)**:
-  `Set-ItemProperty -Path "HKCU:\Software\Classes\AutoBrowserLink\shell\open\command" -Name "(default)" -Value '"C:\OldLocation\AutoBrowser.exe" "%1"'`
+```bash
+dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging
+```
+
+## Run
+
+```bash
+dotnet run --project src\AutoBrowser\AutoBrowser.csproj
+```
+
+Or run `bin\staging\AutoBrowser.exe` directly.
+
+## Tests
+
+```bash
+dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj
+```
+
+Filter out slow UI tests:
+
+```bash
+dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj --filter "FullyQualifiedName!~UI"
+```
+
+## Fix Unused Usings
+
+```bash
+dotnet format src\AutoBrowser\AutoBrowser.csproj --diagnostics IDE0005
+```
+
+## Post-Change Verification
+
+1. Build
+2. Launch, wait 20s, close
+3. Check logs in `bin\staging\Logs/` for `[ERR]`
+4. Fix unused usings if any
+
+## Windows-Specific
+
+- Use `taskkill /F /IM AutoBrowser.exe` to kill running instances
+- Registry path for protocol: `HKCU:\Software\Classes\AutoBrowserLink\shell\open\command`

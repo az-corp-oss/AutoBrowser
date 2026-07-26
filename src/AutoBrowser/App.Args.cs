@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using Serilog;
 
 namespace AutoBrowser;
@@ -15,11 +14,11 @@ public partial class App
 
     private static ParsedArgs ParseArgs(string[] rawArgs)
     {
-        var urlArg         = new Argument<string?>("url", () => null, "URL to route (http/https/autobrowser)");
-        var forceUpdate    = new Option<bool>("--force-update-check",  "Force update check on startup");
-        var skipUpdate     = new Option<bool>("--no-update-check",     "Skip update check on startup");
-        var skipReReg      = new Option<bool>("--no-re-register-prompt", "Skip re-registration prompt on startup");
-        var skipSingleInst = new Option<bool>("--no-single-instance",  "Allow multiple instances");
+        var urlArg = new Argument<string?>("url", () => null, "URL to route (http/https/autobrowser)");
+        var forceUpdate = new Option<bool>("--force-update-check", "Force update check on startup");
+        var skipUpdate = new Option<bool>("--no-update-check", "Skip update check on startup");
+        var skipReReg = new Option<bool>("--no-re-register-prompt", "Skip re-registration prompt on startup");
+        var skipSingleInst = new Option<bool>("--no-single-instance", "Allow multiple instances");
 
         var root = new RootCommand("AutoBrowser — URL router") { urlArg, forceUpdate, skipUpdate, skipReReg, skipSingleInst };
 
@@ -32,13 +31,13 @@ public partial class App
         }
 
         var rawUrl = result.GetValueForArgument(urlArg);
-        var url    = IsUrl(rawUrl) ? rawUrl : null;
+        var url = IsUrl(rawUrl) ? rawUrl : null;
 
         return new ParsedArgs(
-            Url:                url,
-            ForceUpdate:        result.GetValueForOption(forceUpdate),
-            SkipUpdate:         result.GetValueForOption(skipUpdate),
-            SkipReRegister:     result.GetValueForOption(skipReReg),
+            Url: url,
+            ForceUpdate: result.GetValueForOption(forceUpdate),
+            SkipUpdate: result.GetValueForOption(skipUpdate),
+            SkipReRegister: result.GetValueForOption(skipReReg),
             SkipSingleInstance: result.GetValueForOption(skipSingleInst));
     }
 }

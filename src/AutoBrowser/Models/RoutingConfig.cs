@@ -1,5 +1,3 @@
-using AutoBrowser.Models;
-
 namespace AutoBrowser.Models;
 
 public class RoutingConfig

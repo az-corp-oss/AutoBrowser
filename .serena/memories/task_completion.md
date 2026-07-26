@@ -1,13 +1,41 @@
-# Task Completion
+# Task Completion Checklist
 
-## Verification Protocol
-1. **Run Unit Tests**:
-   `dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj`
-2. **Run Unit Tests via Husky (simulates pre-commit)**:
-   `dotnet husky run --group pre-commit`
-3. **Build Staging**:
-   `dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging`
-4. **Launch/Exit Verification**:
-   `$proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 20; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue`
-5. **Log Inspection**: Check logs under `bin\staging\Logs/` for `[ERR]` entries.
-6. **Memory Synchronization (MANDATORY)**: ALWAYS document changes in `AutoBrowser/changes/YYYY-MM-DD` and sync any updated architectural memories. This step is required after every change, no exceptions.
+After completing any coding task, run these commands in order:
+
+## 1. Build
+
+```bash
+dotnet build src\AutoBrowser\AutoBrowser.csproj -o bin\staging
+```
+
+## 2. Fix Unused Usings
+
+```bash
+dotnet format src\AutoBrowser\AutoBrowser.csproj --diagnostics IDE0005
+```
+
+## 3. Run Tests
+
+```bash
+dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj
+```
+
+Filter out UI tests if desktop not available:
+
+```bash
+dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj --filter "FullyQualifiedName!~UI"
+```
+
+## 4. Manual Smoke Test (if UI changes)
+
+Launch, wait 20s, close:
+
+```powershell
+$proc = Start-Process -FilePath "bin\staging\AutoBrowser.exe" -PassThru; Start-Sleep -Seconds 20; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+```
+
+Check logs for `[ERR]` entries in `bin\staging\Logs/`.
+
+## 5. Update Memories
+
+After significant changes, update relevant Serena memories.

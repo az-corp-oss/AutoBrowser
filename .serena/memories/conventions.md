@@ -1,23 +1,48 @@
 # Conventions
 
-## General
-- **Error Handling**: Never use empty catch blocks `catch {}`. Avoid general catch blocks without handling or logging.
-- **Properties**: In Models and ViewModels, inherit from `ObservableObject` or use `CommunityToolkit.Mvvm` source generators.
-- **UI Interaction**: Use data binding to ViewModel commands instead of code-behind events.
+## Code Style
 
-## WPF UI Conventions
-- **Typography Rule**: `ui:TextBlock` with `FontTypography` MUST specify an explicit `Foreground` brush binding (e.g. `Foreground="{DynamicResource TextFillColorPrimaryBrush}"`), otherwise it defaults to black in dark mode.
-- **Page Layout**: Set `ScrollViewer.CanContentScroll="False"` on pages with their own `ScrollViewer` to disable NavigationView's built-in scroll.
-- **Dialogs**: Use WPF UI `MessageBox` with `ShowDialogAsync()` instead of `System.Windows.MessageBox`.
+- C# with C# 13+ features, XAML
+- MVVM with `CommunityToolkit.Mvvm` ([ObservableProperty], [RelayCommand])
+- Remove unused usings after every change (IDE0005)
+- No comments, no emoji
 
-## Testing
-- **Headless Environments**: UI tests (FlaUI) require an active desktop. Running headless causes `GetMainWindow()` to return null. Use `HomeViewModelRuleTests` for headless.
-- **WPF UI Controls**: Add `AutomationProperties.AutomationId` to `ui:TextBox`/`ui:Button` for FlaUI testability (`x:Name` is not enough).
-- **Git Hooks**: Husky.NET enforces unit tests on `git commit`. Manual trigger: `dotnet husky run --group pre-commit`.
+## Naming
 
-## Logging Hierarchy
-- `Information` - Method entry/exit points, key parameters, completion status.
-- `Debug` - Intermediate steps, variable values, branch conditions.
-- `Verbose` - Iterations, fine-grained details.
-- `Error` - Exceptions.
-- **Note**: Serilog uses `Verbose` (not `Trace`).
+| Element | Convention | Example |
+|---|---|---|
+| Local functions | PascalCase | `TryAdd(...)` |
+| Lambda parameters | `_` when unused | `_ => null` |
+| Private fields | _camelCase | `_ruleService` |
+| Data folders | Path.Combine relative | `Data/rules.json` |
+| Service interfaces | I{Name} | `IRuleService` |
+| ViewModels | {Page}ViewModel | `HomeViewModel` |
+
+## Logging
+
+Serilog with structured logging:
+- Information — method entry/exit, completion status
+- Debug — middle steps, variable values
+- Verbose — fine-grained internal steps (below Debug)
+- Error — exception handling with `Log.Error(ex, "message")`
+
+## WPF UI Rules
+
+- `ui:TextBlock` with `FontTypography` MUST have explicit `Foreground` binding (e.g. `Foreground="{DynamicResource TextFillColorPrimaryBrush}"`)
+- Pages with `ScrollViewer`: set `ScrollViewer.CanContentScroll="False"`
+- Dialogs: use WPF UI `MessageBox` with `ShowDialogAsync()`, NOT `System.Windows.MessageBox`
+
+## Error Handling
+
+- No empty catch blocks
+- No general catch blocks without handling/logging
+- Always log exceptions with `Log.Error(ex, "message")`
+
+## Data Paths
+
+| Type | Path |
+|---|---|
+| Rules | `Data/rules.json` |
+| Settings | `Data/settings.json` |
+| Default browser | `Data/default_browser.txt` |
+| Logs | `Logs/` |

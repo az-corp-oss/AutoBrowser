@@ -1,6 +1,5 @@
 using AutoBrowser.Models;
 using AutoBrowser.Services;
-using Xunit;
 
 namespace AutoBrowser.Tests.Services;
 
