@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using AutoBrowser.Helpers;
 using AutoBrowser.Models;
+using AutoBrowser.Services;
 using Serilog;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
@@ -12,7 +13,7 @@ public partial class RuleEditorView : FluentWindow
 {
     public RoutingRule Rule { get; private set; }
 
-    public RuleEditorView()
+    public RuleEditorView(IBrowserProvider browserProvider)
     {
         SystemThemeWatcher.Watch(this);
         InitializeComponent();
@@ -22,7 +23,7 @@ public partial class RuleEditorView : FluentWindow
         ActionCombo.ItemsSource = Enum.GetValues(typeof(RoutingAction));
         ActionCombo.SelectedItem = RoutingAction.Forward;
 
-        var browsers = BrowserDefinition.GetKnownBrowsers();
+        var browsers = browserProvider.GetInstalledBrowsers();
         Log.Information("RuleEditorView: Found {Count} browsers", browsers.Count);
         BrowserCombo.ItemsSource = browsers;
         if (browsers.Count > 0)
@@ -31,7 +32,7 @@ public partial class RuleEditorView : FluentWindow
         Loaded += (_, _) => NameBox.Focus();
     }
 
-    public RuleEditorView(RoutingRule existing) : this()
+    public RuleEditorView(IBrowserProvider browserProvider, RoutingRule existing) : this(browserProvider)
     {
         NameBox.Text = existing.Name;
         PatternBox.Text = existing.UrlPattern;

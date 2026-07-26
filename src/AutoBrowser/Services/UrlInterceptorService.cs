@@ -9,11 +9,19 @@ public class UrlInterceptorService
 {
     private readonly IRuleService _ruleService;
     private readonly IDefaultBrowserService _defaultBrowserService;
+    private readonly IBrowserProvider _browserProvider;
+    private readonly IEnumerable<IBrowserLauncher> _launchers;
 
-    public UrlInterceptorService(IRuleService ruleService, IDefaultBrowserService defaultBrowserService)
+    public UrlInterceptorService(
+        IRuleService ruleService,
+        IDefaultBrowserService defaultBrowserService,
+        IBrowserProvider browserProvider,
+        IEnumerable<IBrowserLauncher> launchers)
     {
         _ruleService = ruleService;
         _defaultBrowserService = defaultBrowserService;
+        _browserProvider = browserProvider;
+        _launchers = launchers;
     }
 
     public RouteResult TryRoute(string url, string? fallbackBrowserPath = null)
@@ -100,57 +108,29 @@ public class UrlInterceptorService
         return url;
     }
 
-    private static void LaunchBrowser(string browserPath, string argumentsTemplate, string url)
+    private void LaunchBrowser(string browserPath, string argumentsTemplate, string url)
     {
         Log.Information("LaunchBrowser called - Path: {BrowserPath}, ArgsTemplate: {ArgsTemplate}, URL: {Url}", browserPath, argumentsTemplate, url);
-        var args = argumentsTemplate.Replace("{url}", url);
-        Log.Verbose("Initial args after URL replacement: {Args}", args);
 
-        if (IsFirefox(browserPath) && !args.Contains("-osint", StringComparison.OrdinalIgnoreCase))
-        {
-            args = $"-osint -url \"{url}\"";
-        }
+        var launcher = _launchers.FirstOrDefault(l => l.CanLaunch(browserPath))
+            ?? _launchers.FirstOrDefault(l => l is GenericBrowserLauncher);
 
-        if (IsEdge(browserPath))
+        if (launcher != null)
         {
-            Log.Verbose("Edge detected, using microsoft-edge protocol for tab reuse");
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = $"microsoft-edge:{url}",
-                UseShellExecute = true
-            });
+            Log.Verbose("Found launcher: {LauncherType}", launcher.GetType().Name);
+            launcher.Launch(browserPath, argumentsTemplate, url);
         }
         else
         {
-            Log.Verbose("Starting process: {BrowserPath} {Args}", browserPath, args);
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = browserPath,
-                Arguments = args,
-                UseShellExecute = false
-            });
+            Log.Warning("No valid browser launcher found for {BrowserPath}", browserPath);
         }
-        Log.Information("LaunchBrowser completed successfully");
     }
 
-    private static bool IsEdge(string browserPath)
-    {
-        var fileName = Path.GetFileNameWithoutExtension(browserPath);
-        return fileName.Equals("msedge", StringComparison.OrdinalIgnoreCase);
-    }
 
-    private static bool IsFirefox(string browserPath)
-    {
-        Log.Debug("IsFirefox called with path: {BrowserPath}", browserPath);
-        var fileName = Path.GetFileNameWithoutExtension(browserPath);
-        var isFirefox = fileName.Equals("firefox", StringComparison.OrdinalIgnoreCase);
-        Log.Verbose("IsFirefox result: {IsFirefox} (FileName: {FileName})", isFirefox, fileName);
-        return isFirefox;
-    }
 
-    private static string ResolveBrowserDisplayName(string browserPath)
+    private string ResolveBrowserDisplayName(string browserPath)
     {
-        var known = BrowserDefinition.GetKnownBrowsers();
+        var known = _browserProvider.GetInstalledBrowsers();
         var match = known.FirstOrDefault(b =>
             b.ExecutablePath.Equals(browserPath, StringComparison.OrdinalIgnoreCase));
         return match?.DisplayName ?? Path.GetFileNameWithoutExtension(browserPath);

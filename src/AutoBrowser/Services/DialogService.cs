@@ -6,12 +6,19 @@ namespace AutoBrowser.Services;
 
 public class DialogService : IDialogService
 {
+    private readonly IBrowserProvider _browserProvider;
+
+    public DialogService(IBrowserProvider browserProvider)
+    {
+        _browserProvider = browserProvider;
+    }
+
     public RoutingRule? ShowAddRuleDialog()
     {
         try
         {
             Log.Information("ShowAddRuleDialog: Opening dialog");
-            var dialog = new RuleEditorView();
+            var dialog = new RuleEditorView(_browserProvider);
             var result = dialog.ShowDialog();
             Log.Information("ShowAddRuleDialog: Dialog result={Result}", result);
             return result == true ? dialog.Rule : null;
@@ -28,7 +35,7 @@ public class DialogService : IDialogService
         try
         {
             Log.Information("ShowEditRuleDialog: Opening dialog for rule {RuleName}", existingRule.Name);
-            var dialog = new RuleEditorView(existingRule);
+            var dialog = new RuleEditorView(_browserProvider, existingRule);
             var result = dialog.ShowDialog();
             Log.Information("ShowEditRuleDialog: Dialog result={Result}", result);
             return result == true ? dialog.Rule : null;

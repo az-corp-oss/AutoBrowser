@@ -12,6 +12,8 @@ public class HomeViewModelTests
     private readonly Mock<IDefaultBrowserService> _mockDefaultBrowserService;
     private readonly Mock<ISettingsService> _mockSettingsService;
     private readonly Mock<IDialogService> _mockDialogService;
+    private readonly Mock<IBrowserProvider> _mockBrowserProvider;
+    private readonly Mock<INotificationService> _mockNotificationService;
 
     public HomeViewModelTests()
     {
@@ -19,6 +21,8 @@ public class HomeViewModelTests
         _mockDefaultBrowserService = new Mock<IDefaultBrowserService>();
         _mockSettingsService = new Mock<ISettingsService>();
         _mockDialogService = new Mock<IDialogService>();
+        _mockBrowserProvider = new Mock<IBrowserProvider>();
+        _mockNotificationService = new Mock<INotificationService>();
 
         _mockRuleService.Setup(x => x.LoadGroups()).Returns(new List<RuleGroup>());
         _mockSettingsService.Setup(x => x.LoadSettings()).Returns(new AppSettings());
@@ -51,7 +55,11 @@ public class HomeViewModelTests
             _mockRuleService.Object,
             _mockDefaultBrowserService.Object,
             _mockSettingsService.Object,
-            _mockDialogService.Object);
+            _mockDialogService.Object,
+            new UpdateService(),
+            _mockBrowserProvider.Object,
+            _mockNotificationService.Object,
+            new List<IBrowserLauncher>());
 
         // Assert
         Assert.Single(vm.Rules);
@@ -66,7 +74,11 @@ public class HomeViewModelTests
             _mockRuleService.Object,
             _mockDefaultBrowserService.Object,
             _mockSettingsService.Object,
-            _mockDialogService.Object);
+            _mockDialogService.Object,
+            new UpdateService(),
+            _mockBrowserProvider.Object,
+            _mockNotificationService.Object,
+            new List<IBrowserLauncher>());
 
         // Assert
         Assert.Null(vm.SelectedRule);
@@ -85,7 +97,11 @@ public class HomeViewModelTests
             _mockRuleService.Object,
             _mockDefaultBrowserService.Object,
             _mockSettingsService.Object,
-            _mockDialogService.Object);
+            _mockDialogService.Object,
+            new UpdateService(),
+            _mockBrowserProvider.Object,
+            _mockNotificationService.Object,
+            new List<IBrowserLauncher>());
         var rule = new RoutingRule { Name = "Test Rule", UrlPattern = "test.com" };
 
         // Act

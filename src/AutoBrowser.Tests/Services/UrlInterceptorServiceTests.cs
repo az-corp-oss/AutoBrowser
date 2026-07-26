@@ -1,7 +1,6 @@
 using AutoBrowser.Models;
 using AutoBrowser.Services;
 using Moq;
-using Xunit;
 
 namespace AutoBrowser.Tests.Services;
 
@@ -9,13 +8,19 @@ public class UrlInterceptorServiceTests
 {
     private readonly Mock<IRuleService> _mockRuleService;
     private readonly Mock<IDefaultBrowserService> _mockDefaultBrowserService;
+    private readonly Mock<IBrowserProvider> _mockBrowserProvider;
     private readonly UrlInterceptorService _sut;
 
     public UrlInterceptorServiceTests()
     {
         _mockRuleService = new Mock<IRuleService>();
         _mockDefaultBrowserService = new Mock<IDefaultBrowserService>();
-        _sut = new UrlInterceptorService(_mockRuleService.Object, _mockDefaultBrowserService.Object);
+        _mockBrowserProvider = new Mock<IBrowserProvider>();
+        _sut = new UrlInterceptorService(
+            _mockRuleService.Object, 
+            _mockDefaultBrowserService.Object, 
+            _mockBrowserProvider.Object,
+            new List<IBrowserLauncher>());
     }
 
     [Fact]
@@ -63,7 +68,8 @@ public class UrlInterceptorServiceTests
             new() { Name = "GitHub", UrlPattern = @"github\.com", IsEnabled = true, Sequence = 1, BrowserPath = @"C:\nonexistent\chrome.exe" }
         });
 
-        Assert.ThrowsAny<Exception>(() => _sut.TryRoute("https://github.com/user/repo"));
+        var result = _sut.TryRoute("https://github.com/user/repo");
+        Assert.Equal(RouteResultType.Forwarded, result.Type);
     }
 
     [Fact]
@@ -88,7 +94,9 @@ public class UrlInterceptorServiceTests
             new() { Name = "Enabled", UrlPattern = @"github\.com", IsEnabled = true, Sequence = 2, BrowserPath = @"C:\nonexistent\firefox.exe" }
         });
 
-        Assert.ThrowsAny<Exception>(() => _sut.TryRoute("https://github.com/user/repo"));
+        var result = _sut.TryRoute("https://github.com/user/repo");
+        Assert.Equal(RouteResultType.Forwarded, result.Type);
+        Assert.Equal("Enabled", result.RuleName);
     }
 
     [Fact]
@@ -99,7 +107,8 @@ public class UrlInterceptorServiceTests
             new() { Name = "GitHub", UrlPattern = @"github\.com", IsEnabled = true, Sequence = 1, BrowserPath = @"C:\nonexistent\chrome.exe" }
         });
 
-        Assert.ThrowsAny<Exception>(() => _sut.TryRoute("autobrowser://github.com/user/repo"));
+        var result = _sut.TryRoute("autobrowser://github.com/user/repo");
+        Assert.Equal(RouteResultType.Forwarded, result.Type);
     }
 
     [Fact]
@@ -121,7 +130,9 @@ public class UrlInterceptorServiceTests
             new() { Name = "Low Priority", UrlPattern = @"github\.com", IsEnabled = true, Sequence = 1, BrowserPath = @"C:\nonexistent\firefox.exe" }
         });
 
-        Assert.ThrowsAny<Exception>(() => _sut.TryRoute("https://github.com/user/repo"));
+        var result = _sut.TryRoute("https://github.com/user/repo");
+        Assert.Equal(RouteResultType.Forwarded, result.Type);
+        Assert.Equal("Low Priority", result.RuleName);
     }
 
     [Fact]

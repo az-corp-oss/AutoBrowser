@@ -2,6 +2,7 @@ using System.IO;
 using System.Text.Json;
 using AutoBrowser.Helpers;
 using AutoBrowser.Models;
+using Serilog;
 
 namespace AutoBrowser.Services;
 
@@ -9,6 +10,13 @@ public class RuleService : IRuleService
 {
     private static readonly string DataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
     private static readonly string ConfigPath = Path.Combine(DataDir, "rules.json");
+
+    private readonly IBrowserProvider _browserProvider;
+
+    public RuleService(IBrowserProvider browserProvider)
+    {
+        _browserProvider = browserProvider;
+    }
 
     public List<RuleGroup> LoadGroups()
     {
@@ -20,13 +28,16 @@ public class RuleService : IRuleService
                 return GetDefaultGroups();
 
             var json = File.ReadAllText(ConfigPath);
-            
+
             RoutingConfig? config = null;
-            try 
+            try
             {
                 config = JsonSerializer.Deserialize<RoutingConfig>(json);
             }
-            catch { /* ignored */ }
+            catch (Exception ex)
+            {
+                Log.Verbose(ex, "Failed to deserialize new RoutingConfig format, trying legacy format");
+            }
 
             if (config?.Groups is { Count: > 0 })
                 return config.Groups;
@@ -52,11 +63,12 @@ public class RuleService : IRuleService
             }
             groups.Insert(0, migratedGroup);
 
-            SaveGroups(groups); 
+            SaveGroups(groups);
             return groups;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Error(ex, "LoadGroups failed");
             return GetDefaultGroups();
         }
     }
@@ -70,9 +82,33 @@ public class RuleService : IRuleService
         File.WriteAllText(ConfigPath, json);
     }
 
+    public async Task SaveGroupsAsync(List<RuleGroup> groups)
+    {
+        EnsureDataDir();
+
+        var config = new RoutingConfig { Groups = groups };
+        var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+        await File.WriteAllTextAsync(ConfigPath, json);
+    }
+
     public List<RoutingRule> LoadRules()
     {
         return LoadGroups()
+            .Where(g => g.IsEnabled)
+            .OrderBy(g => g.Sequence)
+            .SelectMany(g => g.Rules.OrderBy(r => r.Sequence))
+            .ToList();
+    }
+
+    public async Task<List<RuleGroup>> LoadGroupsAsync()
+    {
+        return await Task.Run(() => LoadGroups());
+    }
+
+    public async Task<List<RoutingRule>> LoadRulesAsync()
+    {
+        var groups = await LoadGroupsAsync();
+        return groups
             .Where(g => g.IsEnabled)
             .OrderBy(g => g.Sequence)
             .SelectMany(g => g.Rules.OrderBy(r => r.Sequence))
@@ -85,9 +121,9 @@ public class RuleService : IRuleService
             Directory.CreateDirectory(DataDir);
     }
 
-    private static List<RuleGroup> GetDefaultGroups()
+    private List<RuleGroup> GetDefaultGroups()
     {
-        var browsers = BrowserDefinition.GetKnownBrowsers();
+        var browsers = _browserProvider.GetInstalledBrowsers();
         var edge = browsers.FirstOrDefault(b => b.Name.Contains("edge"));
         var chrome = browsers.FirstOrDefault(b => b.Name.Contains("chrome"));
 

@@ -1,13 +1,16 @@
 using AutoBrowser.Models;
+using AutoBrowser.Services;
 
 namespace AutoBrowser.Tests.Models;
 
 public class BrowserDefinitionTests
 {
+    private readonly IBrowserProvider _provider = new WindowsBrowserProvider();
+
     [Fact]
     public void GetKnownBrowsers_ReturnsList()
     {
-        var browsers = BrowserDefinition.GetKnownBrowsers();
+        var browsers = _provider.GetInstalledBrowsers();
         Assert.NotNull(browsers);
         Assert.IsType<List<BrowserDefinition>>(browsers);
     }
@@ -15,7 +18,7 @@ public class BrowserDefinitionTests
     [Fact]
     public void GetKnownBrowsers_NoDuplicates()
     {
-        var browsers = BrowserDefinition.GetKnownBrowsers();
+        var browsers = _provider.GetInstalledBrowsers();
         var paths = browsers.Select(b => b.ExecutablePath.ToLowerInvariant()).ToList();
         Assert.Equal(paths.Count, paths.Distinct().Count());
     }
@@ -23,7 +26,7 @@ public class BrowserDefinitionTests
     [Fact]
     public void GetKnownBrowsers_NoEmptyPaths()
     {
-        var browsers = BrowserDefinition.GetKnownBrowsers();
+        var browsers = _provider.GetInstalledBrowsers();
         foreach (var browser in browsers)
         {
             Assert.False(string.IsNullOrWhiteSpace(browser.ExecutablePath));
@@ -35,7 +38,7 @@ public class BrowserDefinitionTests
     [Fact]
     public void GetKnownBrowsers_ExcludesSelf()
     {
-        var browsers = BrowserDefinition.GetKnownBrowsers();
+        var browsers = _provider.GetInstalledBrowsers();
         var selfPath = Environment.ProcessPath ?? "";
         Assert.DoesNotContain(browsers, b =>
             b.ExecutablePath.Equals(selfPath, StringComparison.OrdinalIgnoreCase));
@@ -43,7 +46,7 @@ public class BrowserDefinitionTests
 
     [Fact]
     public void BrowserDefinition_Properties_CanBeSet()
-     {
+    {
         var browser = new BrowserDefinition
         {
             Name = "test",
@@ -74,7 +77,7 @@ public class BrowserDefinitionTests
     [InlineData("Vivaldi", true)]
     public void GetKnownBrowsers_ContainsCommonBrowsers(string displayName, bool shouldExist)
     {
-        var browsers = BrowserDefinition.GetKnownBrowsers();
+        var browsers = _provider.GetInstalledBrowsers();
         var exists = browsers.Any(b => b.DisplayName == displayName);
         // Note: This test may fail if browsers aren't installed
         // We're just checking the logic, not the actual installation

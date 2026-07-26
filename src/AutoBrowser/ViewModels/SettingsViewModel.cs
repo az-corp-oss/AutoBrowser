@@ -11,9 +11,10 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IProtocolService _protocolService;
     private readonly IDefaultBrowserService _defaultBrowserService;
     private readonly ISettingsService _settingsService;
+    private readonly IBrowserProvider _browserProvider;
     private bool _isInitialized;
 
-    public List<BrowserDefinition> AvailableBrowsers { get; } = BrowserDefinition.GetKnownBrowsers();
+    public IReadOnlyList<BrowserDefinition> AvailableBrowsers => _browserProvider.GetInstalledBrowsers();
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDarkTheme))]
@@ -80,11 +81,13 @@ public partial class SettingsViewModel : ObservableObject
     public SettingsViewModel(
         IProtocolService protocolService,
         IDefaultBrowserService defaultBrowserService,
-        ISettingsService settingsService)
+        ISettingsService settingsService,
+        IBrowserProvider browserProvider)
     {
         _protocolService = protocolService;
         _defaultBrowserService = defaultBrowserService;
         _settingsService = settingsService;
+        _browserProvider = browserProvider;
 
         var settings = _settingsService.LoadSettings();
         if (!string.IsNullOrEmpty(settings.FallbackBrowserPath))

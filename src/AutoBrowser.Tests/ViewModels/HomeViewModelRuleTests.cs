@@ -28,12 +28,16 @@ public class HomeViewModelRuleTests
 
     private HomeViewModel CreateViewModel(List<RuleGroup>? initialGroups = null)
     {
-        _mockRuleService.Setup(x => x.LoadGroups()).Returns(initialGroups ?? new List<RuleGroup>());
+        _mockRuleService.Setup(rs => rs.LoadGroups()).Returns(initialGroups ?? []);
         return new HomeViewModel(
             _mockRuleService.Object,
             _mockDefaultBrowserService.Object,
             _mockSettingsService.Object,
-            _mockDialogService.Object);
+            _mockDialogService.Object,
+            new UpdateService(),
+            new Mock<IBrowserProvider>().Object,
+            new Mock<INotificationService>().Object,
+            new List<IBrowserLauncher>());
     }
 
     private HomeViewModel CreateViewModelWithRules(List<RoutingRule>? initialRules = null)

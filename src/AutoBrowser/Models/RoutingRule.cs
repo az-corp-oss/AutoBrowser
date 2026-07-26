@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Serilog;
 
 namespace AutoBrowser.Models;
 
@@ -56,10 +57,7 @@ public partial class RoutingRule : ObservableObject
                 return string.Empty;
 
             var fileName = Path.GetFileNameWithoutExtension(BrowserPath);
-            var known = BrowserDefinition.GetKnownBrowsers();
-            var match = known.FirstOrDefault(b =>
-                b.ExecutablePath.Equals(BrowserPath, StringComparison.OrdinalIgnoreCase));
-            return match?.DisplayName ?? fileName;
+            return BrowserDefinition.ResolveDisplayName(fileName) ?? fileName;
         }
     }
 
@@ -72,8 +70,9 @@ public partial class RoutingRule : ObservableObject
         {
             return Regex.IsMatch(url, UrlPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         }
-        catch (RegexParseException)
+        catch (RegexParseException ex)
         {
+            Log.Verbose(ex, "Pattern '{Pattern}' is not valid regex, falling back to substring match", UrlPattern);
             return url.Contains(UrlPattern, StringComparison.OrdinalIgnoreCase);
         }
     }

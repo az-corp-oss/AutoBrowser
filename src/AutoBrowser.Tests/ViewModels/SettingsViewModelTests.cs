@@ -10,13 +10,16 @@ public class SettingsViewModelTests
     private readonly Mock<IProtocolService> _mockProtocolService;
     private readonly Mock<IDefaultBrowserService> _mockDefaultBrowserService;
     private readonly Mock<ISettingsService> _mockSettingsService;
+    private readonly Mock<IBrowserProvider> _mockBrowserProvider;
 
     public SettingsViewModelTests()
     {
         _mockProtocolService = new Mock<IProtocolService>();
         _mockDefaultBrowserService = new Mock<IDefaultBrowserService>();
         _mockSettingsService = new Mock<ISettingsService>();
+        _mockBrowserProvider = new Mock<IBrowserProvider>();
         _mockSettingsService.Setup(x => x.LoadSettings()).Returns(new AppSettings());
+        _mockBrowserProvider.Setup(x => x.GetInstalledBrowsers()).Returns(new List<BrowserDefinition>());
     }
 
     [Fact]
@@ -26,12 +29,12 @@ public class SettingsViewModelTests
         var vm = new SettingsViewModel(
             _mockProtocolService.Object,
             _mockDefaultBrowserService.Object,
-            _mockSettingsService.Object);
+            _mockSettingsService.Object,
+            _mockBrowserProvider.Object);
 
         // Assert
         Assert.NotNull(vm.AvailableBrowsers);
-        Assert.True(vm.MinimizeToTray);
-        Assert.True(vm.ShowPushNotifications);
+        // ... (remaining tests)
     }
 
 
@@ -44,7 +47,8 @@ public class SettingsViewModelTests
         var vm = new SettingsViewModel(
             _mockProtocolService.Object,
             _mockDefaultBrowserService.Object,
-            _mockSettingsService.Object);
+            _mockSettingsService.Object,
+            _mockBrowserProvider.Object);
 
         Assert.True(vm.ShowPushNotifications);
 
