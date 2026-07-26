@@ -6,8 +6,8 @@ namespace AutoBrowser.Services;
 
 public class DefaultBrowserService : IDefaultBrowserService
 {
-    private const string AppName = "AutoBrowser";
-    private const string ProgId = "AutoBrowserLink";
+    private const string AppName = Constants.AppName;
+    private const string ProgId = Constants.ProgId;
 
     private static readonly string DataDir = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "Data");

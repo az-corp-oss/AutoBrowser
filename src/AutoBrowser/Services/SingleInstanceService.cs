@@ -12,7 +12,7 @@ namespace AutoBrowser.Services;
 /// </summary>
 public sealed class SingleInstanceService : IDisposable
 {
-    private const string PipeName = "AutoBrowser-SingleInstancePipe";
+    private const string PipeName = Constants.PipeName;
 
     private CancellationTokenSource? _cts;
     private Task? _listenerTask;

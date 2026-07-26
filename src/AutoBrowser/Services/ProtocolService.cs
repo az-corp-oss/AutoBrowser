@@ -1,11 +1,12 @@
 using Microsoft.Win32;
+using Serilog;
 
 namespace AutoBrowser.Services;
 
 public class ProtocolService : IProtocolService
 {
-    private const string AppName = "AutoBrowser";
-    private const string ProtocolName = "autobrowser";
+    private const string AppName = Constants.AppName;
+    private const string ProtocolName = Constants.ProtocolName;
 
     public bool RegisterProtocolHandler()
     {
@@ -25,8 +26,9 @@ public class ProtocolService : IProtocolService
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warning(ex, "RegisterProtocolHandler failed");
             return false;
         }
     }
@@ -38,8 +40,9 @@ public class ProtocolService : IProtocolService
             Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\{ProtocolName}", false);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warning(ex, "UnregisterProtocolHandler failed");
             return false;
         }
     }
@@ -52,8 +55,9 @@ public class ProtocolService : IProtocolService
                 $@"Software\Classes\{ProtocolName}");
             return key != null;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warning(ex, "IsProtocolRegistered failed");
             return false;
         }
     }
@@ -66,7 +70,6 @@ public class ProtocolService : IProtocolService
             var cmd = key?.GetValue("") as string;
             if (string.IsNullOrEmpty(cmd)) return null;
 
-            // Extract path from: "path" "%1"
             cmd = cmd.Trim();
             if (cmd.StartsWith('"'))
             {
@@ -76,8 +79,9 @@ public class ProtocolService : IProtocolService
             var space = cmd.IndexOf(' ');
             return space > 0 ? cmd[..space] : cmd;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warning(ex, "GetRegisteredPath failed");
             return null;
         }
     }
