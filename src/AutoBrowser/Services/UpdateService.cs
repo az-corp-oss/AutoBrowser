@@ -155,8 +155,9 @@ public class UpdateService
         {
             File.Delete(path + ":Zone.Identifier");
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Verbose(ex, "Failed to remove Zone.Identifier from {Path}", path);
         }
     }
 }

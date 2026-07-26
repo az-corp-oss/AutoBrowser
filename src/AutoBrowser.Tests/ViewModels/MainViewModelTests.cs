@@ -21,7 +21,7 @@ public class MainViewModelTests
     public void AppVersion_And_WindowTitle_ReturnsCorrectValues()
     {
         // Act
-        var vm = new MainViewModel(_mockSettingsService.Object);
+        var vm = new MainViewModel(_mockSettingsService.Object, new UpdateService());
 
         // Assert
         Assert.NotNull(vm.AppVersion);

@@ -6,4 +6,6 @@ public interface ISettingsService
 {
     AppSettings LoadSettings();
     void SaveSettings(AppSettings settings);
+    Task<AppSettings> LoadSettingsAsync();
+    Task SaveSettingsAsync(AppSettings settings);
 }

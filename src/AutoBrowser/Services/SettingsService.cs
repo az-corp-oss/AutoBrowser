@@ -18,12 +18,38 @@ public class SettingsService : ISettingsService
             EnsureDataDir();
 
             if (!File.Exists(SettingsPath))
+                return new AppSettings();
+
+            var json = File.ReadAllText(SettingsPath);
+            return JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to load settings");
+            return new AppSettings();
+        }
+    }
+
+    public void SaveSettings(AppSettings settings)
+    {
+        EnsureDataDir();
+        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(SettingsPath, json);
+    }
+
+    public async Task<AppSettings> LoadSettingsAsync()
+    {
+        try
+        {
+            EnsureDataDir();
+
+            if (!File.Exists(SettingsPath))
             {
                 Log.Debug("Settings file not found, returning defaults");
                 return new AppSettings();
             }
 
-            var json = File.ReadAllText(SettingsPath);
+            var json = await File.ReadAllTextAsync(SettingsPath);
             var settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
             Log.Debug("Settings loaded: {Settings}", json.ReplaceLineEndings(" "));
             return settings;
@@ -35,12 +61,12 @@ public class SettingsService : ISettingsService
         }
     }
 
-    public void SaveSettings(AppSettings settings)
+    public async Task SaveSettingsAsync(AppSettings settings)
     {
         EnsureDataDir();
 
         var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(SettingsPath, json);
+        await File.WriteAllTextAsync(SettingsPath, json);
         Log.Debug("Settings saved: {Settings}", json.ReplaceLineEndings(" "));
     }
 

@@ -8,14 +8,15 @@ namespace AutoBrowser.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly ISettingsService _settingsService;
-    private readonly UpdateService _updateService = new();
+    private readonly UpdateService _updateService;
 
     public string AppVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0.0";
     public string WindowTitle => $"AutoBrowser v{AppVersion} - URL Router";
 
-    public MainViewModel(ISettingsService settingsService)
+    public MainViewModel(ISettingsService settingsService, UpdateService updateService)
     {
         _settingsService = settingsService;
+        _updateService = updateService;
     }
 
     public async Task StartSilentUpdateCheckAsync(bool force = false)
