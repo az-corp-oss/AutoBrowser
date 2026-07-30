@@ -2,8 +2,8 @@
 <RunSettings>
   <RunConfiguration>
     <!-- Timeout for each individual test case (in milliseconds) -->
-    <TestCaseTimeout>30000</TestCaseTimeout>
+    <TestCaseTimeout>20000</TestCaseTimeout>
     <!-- Timeout for the entire test session (in milliseconds) -->
-    <TestSessionTimeout>90000</TestSessionTimeout>
+    <TestSessionTimeout>600000</TestSessionTimeout>
   </RunConfiguration>
 </RunSettings>

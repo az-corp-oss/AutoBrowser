@@ -11,42 +11,44 @@ public class AppLauncher : IDisposable
     private UIA3Automation? _automation;
     private FlaUI.Core.Application? _app;
     private string? _tempDir;
+    private bool _launched;
 
     public FlaUI.Core.Application App => _app ?? throw new InvalidOperationException("App not launched");
     public UIA3Automation Automation => _automation ?? throw new InvalidOperationException("Automation not initialized");
 
+    private void DisposePrevious()
+    {
+        _process?.Dispose();
+        _process = null;
+        _automation?.Dispose();
+        _automation = null;
+        _app = null;
+    }
+
     public FlaUI.Core.Application Launch()
     {
-        try
-        {
-            if (_process != null && !_process.HasExited)
-            {
-                _process.Kill();
-                _process.WaitForExit(2000);
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Failed to kill existing process: {ex.Message}");
-        }
-
-        foreach (var proc in Process.GetProcessesByName("AutoBrowser"))
+        if (_launched)
         {
             try
             {
-                if (!proc.HasExited)
-                {
-                    proc.Kill();
-                    proc.WaitForExit(2000);
-                }
+                if (_process?.HasExited == false)
+                    return _app!;
             }
-            catch (Exception ex)
+            catch (InvalidOperationException)
             {
-                Debug.WriteLine($"Failed to kill lingering process: {ex.Message}");
+                // Process handle released, need to relaunch
             }
+
+            _launched = false;
         }
 
-        Thread.Sleep(500);
+        DisposePrevious();
+        KillAllInstances();
+        // Wait for processes to exit instead of hardcoded sleep
+        for (int i = 0; i < 10 && System.Diagnostics.Process.GetProcessesByName("AutoBrowser").Length > 0; i++)
+        {
+            Thread.Sleep(100);
+        }
 
         _tempDir = Path.Combine(Path.GetTempPath(), $"AutoBrowserTests_{Guid.NewGuid()}");
         Directory.CreateDirectory(_tempDir);
@@ -65,38 +67,65 @@ public class AppLauncher : IDisposable
         });
 
         if (_process == null)
-        {
-            throw new InvalidOperationException("Failed to start AutoBrowser process.");
-        }
-
-        Thread.Sleep(1000);
+            throw new InvalidOperationException("Failed to start process");
 
         _automation = new UIA3Automation();
-        _app = FlaUI.Core.Application.Attach(_process);
+        _app = new FlaUI.Core.Application(_process);
+        _launched = true;
 
         return _app;
     }
 
-    private void CopyDirectory(string sourceDir, string destDir)
+    private static void KillAllInstances()
+    {
+        var processes = Process.GetProcessesByName("AutoBrowser");
+        foreach (var proc in processes)
+        {
+            try
+            {
+                if (!proc.HasExited)
+                {
+                    proc.Kill();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to signal process kill: {ex.Message}");
+            }
+        }
+
+        // Wait for all signaled processes to exit to ensure complete teardown
+        foreach (var proc in processes)
+        {
+            try
+            {
+                if (!proc.HasExited)
+                {
+                    proc.WaitForExit(2000);
+                }
+                proc.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to wait for process exit: {ex.Message}");
+            }
+        }
+    }
+
+    private static void CopyDirectory(string sourceDir, string destDir)
     {
         var dir = new DirectoryInfo(sourceDir);
-        var dirs = dir.GetDirectories();
+        if (!dir.Exists)
+            throw new DirectoryNotFoundException($"Source directory not found: {sourceDir}");
 
-        if (!Directory.Exists(destDir))
-        {
-            Directory.CreateDirectory(destDir);
-        }
+        var dirs = dir.GetDirectories();
+        Directory.CreateDirectory(destDir);
 
         foreach (var file in dir.GetFiles())
-        {
-            var targetFilePath = Path.Combine(destDir, file.Name);
-            file.CopyTo(targetFilePath, true);
-        }
+            file.CopyTo(Path.Combine(destDir, file.Name), true);
 
         foreach (var subdirectory in dirs)
-        {
             CopyDirectory(subdirectory.FullName, Path.Combine(destDir, subdirectory.Name));
-        }
     }
 
     public void DismissBlockingDialogs(int retries = 3)
@@ -120,7 +149,11 @@ public class AppLauncher : IDisposable
                         {
                             button.Click();
                             dismissed = true;
-                            Thread.Sleep(500);
+                            for (var wait = 0; wait < 10; wait++)
+                            {
+                                try { if (window.IsOffscreen) break; } catch { break; }
+                                Thread.Sleep(100);
+                            }
                         }
                     }
                 }
@@ -150,32 +183,7 @@ public class AppLauncher : IDisposable
             Debug.WriteLine($"Failed to clean up process during dispose: {ex.Message}");
         }
 
-        foreach (var proc in Process.GetProcessesByName("AutoBrowser"))
-        {
-            try
-            {
-                if (!proc.HasExited)
-                {
-                    proc.Kill();
-                    proc.WaitForExit(2000);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to kill background process: {ex.Message}");
-            }
-            finally
-            {
-                try
-                {
-                    proc.Dispose();
-                }
-                catch
-                {
-                    /* Ignore disposal errors */
-                }
-            }
-        }
+        KillAllInstances();
 
         _automation?.Dispose();
         _process?.Dispose();

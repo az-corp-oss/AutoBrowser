@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
+using AutoBrowser.Commands;
 using AutoBrowser.Models;
 using AutoBrowser.Services;
 using AutoBrowser.ViewModels;
@@ -31,7 +32,7 @@ public partial class App : Application
 
     private NotifyIcon? _trayIcon;
     private bool _isExiting;
-    private ParsedArgs _parsedArgs = null!;
+    private RouteOptions _parsedArgs = null!;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -46,6 +47,9 @@ public partial class App : Application
         Log.Debug("Args: {Args}", string.Join(" ", e.Args));
 
         var services = new ServiceCollection();
+        services.AddSingleton<ISettingsRepository, JsonSettingsRepository>();
+        services.AddSingleton<IRuleRepository, JsonRuleRepository>();
+        services.AddSingleton<IDefaultRulesFactory, DefaultRulesFactory>();
         services.AddSingleton<IRuleService, RuleService>();
         services.AddSingleton<IProtocolService, ProtocolService>();
         services.AddSingleton<IDefaultBrowserService, DefaultBrowserService>();
@@ -80,7 +84,7 @@ public partial class App : Application
         base.OnStartup(e);
 
         // Parse command-line arguments once
-        _parsedArgs = ParseArgs(e.Args);
+        _parsedArgs = Commands.RouteCommand.Parse(e.Args);
 
         // Use parsed URL for early routing and later pipe signaling
         if (_parsedArgs.Url != null)

@@ -5,7 +5,7 @@ using FlaUI.Core.Tools;
 namespace AutoBrowser.Tests.UI;
 
 [Collection("UiTests")]
-public class MainWindowTests : IDisposable
+public class MainWindowTests
 {
     private readonly AppLauncher _launcher;
 
@@ -13,8 +13,6 @@ public class MainWindowTests : IDisposable
     {
         _launcher = launcher;
     }
-
-    public void Dispose() => _launcher.Dispose();
 
     private Window WaitForMainWindow(FlaUI.Core.Application app)
     {
@@ -50,13 +48,31 @@ public class MainWindowTests : IDisposable
         return mainWindow;
     }
 
-    [Fact]
-    public void App_Launches_MainWindow_IsVisible()
+    private Window SetupTest(out FlaUI.Core.Application app)
     {
-        var app = _launcher.Launch();
+        app = _launcher.Launch();
         var mainWindow = WaitForMainWindow(app);
         mainWindow.Focus();
         _launcher.DismissBlockingDialogs();
+        NavigateToHome(mainWindow);
+        return mainWindow;
+    }
+
+    private void NavigateToHome(Window mainWindow)
+    {
+        var homeItem = mainWindow.FindFirstDescendant(cf =>
+            cf.ByControlType(ControlType.ListItem).And(cf.ByText("Home")));
+        if (homeItem != null)
+        {
+            homeItem.Click();
+            Thread.Sleep(300);
+        }
+    }
+
+    [Fact]
+    public void App_Launches_MainWindow_IsVisible()
+    {
+        var mainWindow = SetupTest(out _);
 
         Assert.True(mainWindow.IsAvailable);
     }
@@ -64,10 +80,7 @@ public class MainWindowTests : IDisposable
     [Fact]
     public void MainWindow_HasCorrect_Title()
     {
-        var app = _launcher.Launch();
-        var mainWindow = WaitForMainWindow(app);
-        mainWindow.Focus();
-        _launcher.DismissBlockingDialogs();
+        var mainWindow = SetupTest(out _);
 
         Assert.Contains("AutoBrowser", mainWindow.Name);
     }
@@ -75,10 +88,7 @@ public class MainWindowTests : IDisposable
     [Fact]
     public void MainWindow_ContainsNavigationView()
     {
-        var app = _launcher.Launch();
-        var mainWindow = WaitForMainWindow(app);
-        mainWindow.Focus();
-        _launcher.DismissBlockingDialogs();
+        var mainWindow = SetupTest(out _);
 
         var navView = mainWindow.FindFirstDescendant(cf => cf.ByControlType(ControlType.List));
 
@@ -88,10 +98,7 @@ public class MainWindowTests : IDisposable
     [Fact]
     public void MainWindow_HomePage_IsDefault()
     {
-        var app = _launcher.Launch();
-        var mainWindow = WaitForMainWindow(app);
-        mainWindow.Focus();
-        _launcher.DismissBlockingDialogs();
+        var mainWindow = SetupTest(out _);
 
         var routingRulesText = Retry.WhileNull(() => mainWindow.FindFirstDescendant(cf =>
             cf.ByText("Routing Rules")), TimeSpan.FromSeconds(5)).Result;
@@ -104,10 +111,7 @@ public class MainWindowTests : IDisposable
     [InlineData("Settings")]
     public void MainWindow_CanNavigateToPage(string pageName)
     {
-        var app = _launcher.Launch();
-        var mainWindow = WaitForMainWindow(app);
-        mainWindow.Focus();
-        _launcher.DismissBlockingDialogs();
+        var mainWindow = SetupTest(out _);
         var navItem = Retry.WhileNull(() => mainWindow.FindFirstDescendant(cf =>
             cf.ByText(pageName)), TimeSpan.FromSeconds(5)).Result;
         Assert.NotNull(navItem);
@@ -127,10 +131,7 @@ public class MainWindowTests : IDisposable
     [InlineData("Check Update")]
     public void MainWindow_Toolbar_HasButton(string buttonText)
     {
-        var app = _launcher.Launch();
-        var mainWindow = WaitForMainWindow(app);
-        mainWindow.Focus();
-        _launcher.DismissBlockingDialogs();
+        var mainWindow = SetupTest(out _);
         var button = Retry.WhileNull(() => mainWindow.FindFirstDescendant(cf =>
             cf.ByControlType(ControlType.Button).And(cf.ByText(buttonText))),
             TimeSpan.FromSeconds(5)).Result;
@@ -141,10 +142,7 @@ public class MainWindowTests : IDisposable
     [Fact]
     public void MainWindow_AddButton_OpensRuleEditor()
     {
-        var app = _launcher.Launch();
-        var mainWindow = WaitForMainWindow(app);
-        mainWindow.Focus();
-        _launcher.DismissBlockingDialogs();
+        var mainWindow = SetupTest(out var app);
         var addButton = Retry.WhileNull(() => mainWindow.FindFirstDescendant(cf =>
             cf.ByControlType(ControlType.Button).And(cf.ByText("Add"))),
             TimeSpan.FromSeconds(5)).Result;
@@ -159,10 +157,7 @@ public class MainWindowTests : IDisposable
     [Fact]
     public void MainWindow_AddRule_FillForm_Save()
     {
-        var app = _launcher.Launch();
-        var mainWindow = WaitForMainWindow(app);
-        mainWindow.Focus();
-        _launcher.DismissBlockingDialogs();
+        var mainWindow = SetupTest(out var app);
         var addButton = Retry.WhileNull(() => mainWindow.FindFirstDescendant(cf =>
             cf.ByControlType(ControlType.Button).And(cf.ByText("Add"))),
             TimeSpan.FromSeconds(5)).Result;

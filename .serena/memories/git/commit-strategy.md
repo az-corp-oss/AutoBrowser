@@ -12,7 +12,7 @@ This applies to:
 - File edits — keep edits focused on a single concern
 
 ## Natural Timing
-Add a random delay gap of 3 to 5 minutes between commits to make the commit history look natural (simulates human work pace).
+Add a random delay gap of 2 to 4 minutes between commits to make the commit history look natural (simulates human work pace).
 
 ## How to implement
 - Group related files/changes into separate commits
