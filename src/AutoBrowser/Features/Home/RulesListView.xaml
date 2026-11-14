@@ -10,7 +10,7 @@
         <local:BoolToRotationConverter x:Key="BoolToRotationConverter" />
 
         <Style x:Key="GroupBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="6"/>
@@ -31,7 +31,7 @@
         </Style>
 
         <Style x:Key="RuleBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
@@ -101,11 +101,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:RoutingRule}">
                                     <Border Style="{StaticResource RuleBorderStyle}"
-                                            MouseLeftButtonDown="RuleBorder_MouseLeftButtonDown">
-                                        <Border.InputBindings>
-                                            <MouseBinding MouseAction="LeftDoubleClick"
-                                                          Command="{Binding DataContext.EditRuleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                        </Border.InputBindings>
+                                            PreviewMouseLeftButtonDown="RuleBorder_PreviewMouseLeftButtonDown">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
