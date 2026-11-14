@@ -28,7 +28,7 @@
             <StackPanel Margin="24,16,24,80">
 
                 <!-- App Info Card -->
-                <Border Padding="20" Margin="0,0,0,24" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="8">
+                <Border Padding="20" Margin="0,0,0,24" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="8">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="80"/>
@@ -60,7 +60,7 @@
 
                 <StackPanel>
                     <!-- WPF-UI -->
-                    <Border Padding="12,10" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Padding="12,10" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32"/>
@@ -75,7 +75,7 @@
                     </Border>
 
                     <!-- CommunityToolkit.Mvvm -->
-                    <Border Padding="12,10" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Padding="12,10" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32"/>
@@ -90,7 +90,7 @@
                     </Border>
 
                     <!-- Serilog -->
-                    <Border Padding="12,10" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Padding="12,10" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32"/>
@@ -105,7 +105,7 @@
                     </Border>
 
                     <!-- DependencyInjection -->
-                    <Border Padding="12,10" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Padding="12,10" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32"/>

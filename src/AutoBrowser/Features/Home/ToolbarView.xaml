@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <Border Padding="6,3"
-            Background="{DynamicResource CardBackgroundBrush}"
+            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{DynamicResource ControlElevationBorderBrush}"
             BorderThickness="1" CornerRadius="4">
         <DockPanel>
