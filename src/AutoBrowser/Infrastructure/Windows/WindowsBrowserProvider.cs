@@ -188,7 +188,7 @@ public class WindowsBrowserProvider : IBrowserProvider
                     var appPath = registeredApps.GetValue(appName) as string;
                     if (string.IsNullOrEmpty(appPath)) continue;
 
-                    using var appKey = Registry.LocalMachine.OpenSubKey(appPath);
+                    using var appKey = baseKey.OpenSubKey(appPath);
                     var capabilitiesUrl = appKey?.OpenSubKey("URLAssociations")?.GetValue("http") as string
                                            ?? appKey?.OpenSubKey("URLAssociations")?.GetValue("https") as string;
                     if (string.IsNullOrEmpty(capabilitiesUrl)) continue;
