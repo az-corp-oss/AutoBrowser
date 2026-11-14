@@ -225,7 +225,7 @@ public class HomeViewModelRuleTests
         Assert.Equal("Second", vm.Rules[0].Name);
         Assert.Equal("First", vm.Rules[1].Name);
         Assert.Equal("Third", vm.Rules[2].Name);
-        
+
         // Verify sequences are updated
         Assert.Equal(1, rule2.Sequence);
         Assert.Equal(2, rule1.Sequence);
@@ -280,7 +280,7 @@ public class HomeViewModelRuleTests
         Assert.Equal("First", vm.Rules[0].Name);
         Assert.Equal("Third", vm.Rules[1].Name);
         Assert.Equal("Second", vm.Rules[2].Name);
-        
+
         // Verify sequences are updated
         Assert.Equal(1, rule1.Sequence);
         Assert.Equal(2, rule3.Sequence);

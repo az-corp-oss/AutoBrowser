@@ -18,7 +18,7 @@ public class SettingsServiceTests
         // Arrange: Ensure settings file doesn't exist for this test scenario
         // This test might be tricky if it relies on a real file system path that might exist.
         // For a true unit test, we'd mock the file system, but for now we test the fallback.
-        
+
         // Act
         var settings = _sut.LoadSettings();
 

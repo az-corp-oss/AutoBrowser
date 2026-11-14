@@ -484,6 +484,12 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
-
 # Graphify output
 graphify-out/
+
+# Eling memory runtime files (canonical memories: .eling/memories/)
+.eling/index.db
+.eling/memory.db
+.eling/memory.db-*
+.eling/logs/
+.eling/memories/

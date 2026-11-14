@@ -8,8 +8,8 @@
       "args": [
         "test",
         "src/AutoBrowser.Tests/AutoBrowser.Tests.csproj",
-        "--filter",
-        "FullyQualifiedName!~UI",
+        "--settings",
+        "AutoBrowser.Tests.runsettings",
         "--verbosity",
         "quiet"
       ],

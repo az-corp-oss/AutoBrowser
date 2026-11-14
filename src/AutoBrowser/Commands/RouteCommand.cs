@@ -15,7 +15,7 @@ public class RouteCommand
 {
     public static RootCommand GetRootCommand()
     {
-        var urlArg = new Argument<string?>("url", () => null, "URL to route (http/https/autobrowser)");
+        var urlArg = new Argument<string?>("url", "URL to route (http/https/autobrowser)");
         var forceUpdate = new Option<bool>("--force-update-check", "Force update check on startup");
         var skipUpdate = new Option<bool>("--no-update-check", "Skip update check on startup");
         var skipReReg = new Option<bool>("--no-re-register-prompt", "Skip re-registration prompt on startup");

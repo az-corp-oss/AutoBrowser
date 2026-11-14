@@ -34,7 +34,7 @@ public class UpdateServiceTests
     [Fact]
     public async Task CheckForUpdateAsync_404_ReturnsNull()
     {
-        var handler = new MockHttpMessageHandler(async (req, ct) => 
+        var handler = new MockHttpMessageHandler(async (req, ct) =>
         {
             return new HttpResponseMessage(HttpStatusCode.NotFound);
         });
@@ -48,7 +48,7 @@ public class UpdateServiceTests
     [Fact]
     public async Task CheckForUpdateAsync_EmptyReleases_ReturnsNull()
     {
-        var handler = new MockHttpMessageHandler(async (req, ct) => 
+        var handler = new MockHttpMessageHandler(async (req, ct) =>
         {
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -76,8 +76,8 @@ public class UpdateServiceTests
             }
         };
         var json = JsonSerializer.Serialize(releases);
-        
-        var handler = new MockHttpMessageHandler(async (req, ct) => 
+
+        var handler = new MockHttpMessageHandler(async (req, ct) =>
         {
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -108,8 +108,8 @@ public class UpdateServiceTests
             }
         };
         var json = JsonSerializer.Serialize(releases);
-        
-        var handler = new MockHttpMessageHandler(async (req, ct) => 
+
+        var handler = new MockHttpMessageHandler(async (req, ct) =>
         {
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -153,8 +153,8 @@ public class UpdateServiceTests
             }
         };
         var json = JsonSerializer.Serialize(releases);
-        
-        var handler = new MockHttpMessageHandler(async (req, ct) => 
+
+        var handler = new MockHttpMessageHandler(async (req, ct) =>
         {
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -190,8 +190,8 @@ public class UpdateServiceTests
             }
         };
         var json = JsonSerializer.Serialize(releases);
-        
-        var handler = new MockHttpMessageHandler(async (req, ct) => 
+
+        var handler = new MockHttpMessageHandler(async (req, ct) =>
         {
             return new HttpResponseMessage(HttpStatusCode.OK)
             {

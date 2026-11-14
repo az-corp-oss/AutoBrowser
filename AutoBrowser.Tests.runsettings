@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
   <RunConfiguration>
+    <!-- Exclude disruptive/slow FlaUI UI tests by default; run them only when explicitly requested -->
+    <TestCaseFilter>FullyQualifiedName!~UI</TestCaseFilter>
     <!-- Timeout for each individual test case (in milliseconds) -->
     <TestCaseTimeout>20000</TestCaseTimeout>
     <!-- Timeout for the entire test session (in milliseconds) -->

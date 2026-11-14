@@ -16,19 +16,33 @@ Or run `bin\staging\AutoBrowser.exe` directly.
 
 ## Tests
 
+Default run (UI tests excluded automatically via runsettings):
+
 ```bash
 dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj
 ```
 
-Filter out slow UI tests:
+During development, run only the affected tests (faster, no UI):
 
 ```bash
-dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj --filter "FullyQualifiedName!~UI"
+dotnet test --settings AutoBrowser.Tests.runsettings src\AutoBrowser.Tests\AutoBrowser.Tests.csproj --filter "FullyQualifiedName~<TestClass>"
+```
+
+Run UI tests explicitly (only when needed / before release):
+
+```bash
+dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj --filter "FullyQualifiedName~UI"
+```
+
+Run the full suite (pre-push / release validation):
+
+```bash
+dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj
 ```
 
 Test timeouts are configured in `AutoBrowser.Tests.runsettings`:
-- Per-test: 30s
-- Session: 90s
+- Per-test: 20s
+- Session: 600s
 
 ## Post-Change Verification
 

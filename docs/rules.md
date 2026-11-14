@@ -1,4 +1,4 @@
-# 🛑 CRITICAL AGENT RULES
+# CRITICAL AGENT RULES
 
 > **AGENT VIOLATION = WASTED TIME.** Follow these explicitly.
 
@@ -19,5 +19,5 @@
 - **NO COMMENTS**: Unless specifically requested.
 
 ### 4. MEMORY/STATE
-- **SYNC**: Update `AutoBrowser/changes/YYYY-MM/YYYY-MM-DD` and other memories immediately upon finishing (sync `memory_name`, `content`).
+- **SYNC**: Append changes to `CHANGELOG.md` (newest first, Keep a Changelog format) and update relevant Serena memories immediately upon finishing.
 

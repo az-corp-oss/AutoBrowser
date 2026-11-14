@@ -36,11 +36,11 @@ public class HomeViewModelTests
         // Arrange
         var groups = new List<RuleGroup>
         {
-            new() 
-            { 
-                Id = "g1", 
-                Name = "Default", 
-                IsEnabled = true, 
+            new()
+            {
+                Id = "g1",
+                Name = "Default",
+                IsEnabled = true,
                 Sequence = 1,
                 Rules = new ObservableCollection<RoutingRule>
                 {
