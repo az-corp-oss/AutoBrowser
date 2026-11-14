@@ -10,13 +10,16 @@ public partial class SettingsViewModel(
     IProtocolService protocolService,
     IDefaultBrowserService defaultBrowserService,
     ISettingsService settingsService,
-    IBrowserProvider browserProvider) : ObservableObject
+    IBrowserProvider browserProvider,
+    IWindowsSearchInterceptorService windowsSearchInterceptorService) : ObservableObject
 {
     private readonly IProtocolService _protocolService = protocolService ?? throw new ArgumentNullException(nameof(protocolService));
     private readonly IDefaultBrowserService _defaultBrowserService = defaultBrowserService ?? throw new ArgumentNullException(nameof(defaultBrowserService));
     private readonly ISettingsService _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
     private readonly IBrowserProvider _browserProvider = browserProvider ?? throw new ArgumentNullException(nameof(browserProvider));
+    private readonly IWindowsSearchInterceptorService _windowsSearchInterceptorService = windowsSearchInterceptorService ?? throw new ArgumentNullException(nameof(windowsSearchInterceptorService));
     private bool _isInitialized;
+    private bool _isChangingInterceptWindowsSearch;
 
     public IReadOnlyList<BrowserDefinition> AvailableBrowsers => _browserProvider.GetInstalledBrowsers();
 
@@ -34,6 +37,8 @@ public partial class SettingsViewModel(
     private bool _closeToTray;
     [ObservableProperty]
     private bool _showPushNotifications = true;
+    [ObservableProperty]
+    private bool _interceptWindowsSearch;
 
     [ObservableProperty]
     private string _status = "Ready";
@@ -94,6 +99,7 @@ public partial class SettingsViewModel(
         MinimizeToTray = settings.MinimizeToTray;
         CloseToTray = settings.CloseToTray;
         ShowPushNotifications = settings.ShowPushNotifications;
+        InterceptWindowsSearch = settings.InterceptWindowsSearch;
 
         CurrentApplicationTheme = ApplicationThemeManager.GetAppTheme();
         ApplicationThemeManager.Changed += OnThemeChanged;
@@ -152,5 +158,45 @@ public partial class SettingsViewModel(
         settings.ShowPushNotifications = value;
         _settingsService.SaveSettings(settings);
         Status = value ? "Push notifications enabled" : "Push notifications disabled";
+    }
+
+    partial void OnInterceptWindowsSearchChanged(bool value)
+    {
+        if (!_isInitialized || _isChangingInterceptWindowsSearch) return;
+
+        _isChangingInterceptWindowsSearch = true;
+        try
+        {
+            Log.Debug("InterceptWindowsSearch changed to {Value}", value);
+
+            if (value)
+            {
+                if (_windowsSearchInterceptorService.EnableInterception())
+                {
+                    Status = "Windows Search interception enabled";
+                }
+                else
+                {
+                    InterceptWindowsSearch = false;
+                    Status = "Failed to enable interception";
+                }
+            }
+            else
+            {
+                if (_windowsSearchInterceptorService.DisableInterception())
+                {
+                    Status = "Windows Search interception disabled";
+                }
+                else
+                {
+                    InterceptWindowsSearch = true;
+                    Status = "Failed to disable interception";
+                }
+            }
+        }
+        finally
+        {
+            _isChangingInterceptWindowsSearch = false;
+        }
     }
 }

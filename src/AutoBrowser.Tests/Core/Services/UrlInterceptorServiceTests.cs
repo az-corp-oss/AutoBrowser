@@ -17,8 +17,8 @@ public class UrlInterceptorServiceTests
         _mockDefaultBrowserService = new Mock<IDefaultBrowserService>();
         _mockBrowserProvider = new Mock<IBrowserProvider>();
         _sut = new UrlInterceptorService(
-            _mockRuleService.Object, 
-            _mockDefaultBrowserService.Object, 
+            _mockRuleService.Object,
+            _mockDefaultBrowserService.Object,
             _mockBrowserProvider.Object,
             new List<IBrowserLauncher>());
     }
@@ -153,6 +153,55 @@ public class UrlInterceptorServiceTests
 
         var result = _sut.TryRoute("https://github.com/user/repo");
         Assert.Equal(RouteResultType.Dropped, result.Type);
+        Assert.Null(result.BrowserDisplayName);
+    }
+
+    [Fact]
+    public void TryRoute_MicrosoftEdgePrefixWithUrlSubstringInQuery_PreservesDomain()
+    {
+        _mockRuleService.Setup(x => x.LoadRules()).Returns(new List<RoutingRule>
+        {
+            new() { Name = "Example", UrlPattern = @"example\.com", IsEnabled = true, Sequence = 1, BrowserPath = @"C:\chrome.exe" }
+        });
+
+        var result = _sut.TryRoute("microsoft-edge:https://example.com/search?curl=123");
+        Assert.Equal(RouteResultType.Forwarded, result.Type);
+    }
+
+    [Fact]
+    public void TryRoute_MicrosoftEdgeUrlParamWithTimestamp_PreservesInnerUrl()
+    {
+        _mockRuleService.Setup(x => x.LoadRules()).Returns(new List<RoutingRule>
+        {
+            new() { Name = "Example", UrlPattern = @"example\.com", IsEnabled = true, Sequence = 1, BrowserPath = @"C:\chrome.exe" }
+        });
+
+        var result = _sut.TryRoute("microsoft-edge:?url=https://example.com/page&timestamp=123");
+        Assert.Equal(RouteResultType.Forwarded, result.Type);
+    }
+
+    [Fact]
+    public void TryRoute_MatchingRuleTargetsSelfExecutable_SkipsRuleAndReturnsNoMatch()
+    {
+        _mockRuleService.Setup(x => x.LoadRules()).Returns(new List<RoutingRule>
+        {
+            new() { Name = "Self", UrlPattern = @"example\.com", IsEnabled = true, Sequence = 1, BrowserPath = Environment.ProcessPath! }
+        });
+
+        var result = _sut.TryRoute("https://example.com/page");
+
+        Assert.Equal(RouteResultType.NoMatch, result.Type);
+        Assert.Null(result.RuleName);
+    }
+
+    [Fact]
+    public void TryRoute_FallbackBrowserTargetsSelfExecutable_ReturnsNoMatch()
+    {
+        _mockRuleService.Setup(x => x.LoadRules()).Returns(new List<RoutingRule>());
+
+        var result = _sut.TryRoute("https://example.com/page", Environment.ProcessPath);
+
+        Assert.Equal(RouteResultType.NoMatch, result.Type);
         Assert.Null(result.BrowserDisplayName);
     }
 }

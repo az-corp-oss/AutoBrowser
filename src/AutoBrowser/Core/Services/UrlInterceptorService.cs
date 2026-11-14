@@ -48,6 +48,12 @@ public class UrlInterceptorService(
 
             if (rule.IsForward)
             {
+                if (IsSelfExecutable(rule.BrowserPath))
+                {
+                    Log.Warning("Rule '{RuleName}' targets AutoBrowser itself ({BrowserPath}); skipping to avoid an infinite loop", rule.Name, rule.BrowserPath);
+                    continue;
+                }
+
                 Log.Verbose("Rule '{RuleName}' matched, launching browser: {BrowserPath}", rule.Name, rule.BrowserPath);
                 LaunchBrowser(rule.BrowserPath, rule.BrowserArguments, url);
                 Log.Information("TryRoute completed: {Browser} (matched rule: {RuleName})", rule.BrowserDisplayName, rule.Name);
@@ -63,11 +69,18 @@ public class UrlInterceptorService(
         Log.Verbose("No rules matched, checking fallback browser");
         if (!string.IsNullOrEmpty(fallbackBrowserPath) && File.Exists(fallbackBrowserPath))
         {
-            Log.Verbose("Using selected fallback browser: {BrowserPath}", fallbackBrowserPath);
-            LaunchBrowser(fallbackBrowserPath, "{url}", url);
-            var displayName = ResolveBrowserDisplayName(fallbackBrowserPath);
-            Log.Information("TryRoute completed: {Browser} (fallback)", displayName);
-            return new RouteResult(RouteResultType.Forwarded, displayName);
+            if (IsSelfExecutable(fallbackBrowserPath))
+            {
+                Log.Warning("Fallback browser points to AutoBrowser itself ({BrowserPath}); ignoring to avoid an infinite loop", fallbackBrowserPath);
+            }
+            else
+            {
+                Log.Verbose("Using selected fallback browser: {BrowserPath}", fallbackBrowserPath);
+                LaunchBrowser(fallbackBrowserPath, "{url}", url);
+                var displayName = ResolveBrowserDisplayName(fallbackBrowserPath);
+                Log.Information("TryRoute completed: {Browser} (fallback)", displayName);
+                return new RouteResult(RouteResultType.Forwarded, displayName);
+            }
         }
 
         Log.Information("No rules matched and no fallback browser set for URL: {Url}", url);
@@ -78,6 +91,46 @@ public class UrlInterceptorService(
     private static string StripProtocolPrefix(string url)
     {
         Log.Debug("StripProtocolPrefix called with URL: {Url}", url);
+
+        if (url.StartsWith("microsoft-edge:", StringComparison.OrdinalIgnoreCase))
+        {
+            var afterPrefix = url.Substring("microsoft-edge:".Length);
+            if (afterPrefix.StartsWith("//", StringComparison.Ordinal))
+            {
+                afterPrefix = afterPrefix.Substring(2);
+            }
+
+            var unescaped = Uri.UnescapeDataString(afterPrefix);
+            if (unescaped.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                unescaped.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                url = unescaped;
+                Log.Verbose("Extracted direct URL from microsoft-edge: prefix: {Url}", url);
+            }
+            else
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(afterPrefix, @"(?:\?|&)url=([^&]*)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    var extracted = Uri.UnescapeDataString(match.Groups[1].Value);
+                    if (!string.IsNullOrWhiteSpace(extracted))
+                    {
+                        url = extracted;
+                        Log.Verbose("Extracted URL from microsoft-edge: url parameter: {Url}", url);
+                    }
+                    else
+                    {
+                        url = afterPrefix;
+                    }
+                }
+                else
+                {
+                    url = unescaped;
+                    Log.Verbose("Removed microsoft-edge: prefix, result: {Url}", url);
+                }
+            }
+        }
+
         var prefixes = new[] { "autobrowser:", "autobrowser://" };
         foreach (var prefix in prefixes)
         {
@@ -98,6 +151,21 @@ public class UrlInterceptorService(
 
         Log.Debug("StripProtocolPrefix completed: {Url}", url);
         return url;
+    }
+
+    private static bool IsSelfExecutable(string browserPath)
+    {
+        var processPath = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(processPath)) return false;
+
+        try
+        {
+            return string.Equals(Path.GetFullPath(browserPath), processPath, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException or System.Security.SecurityException)
+        {
+            return false;
+        }
     }
 
     private void LaunchBrowser(string browserPath, string argumentsTemplate, string url)

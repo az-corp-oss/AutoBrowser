@@ -1,308 +1,292 @@
 # Product Requirements Document: AutoBrowser
 
+Status: **Active development** | Owner: TBD | Last updated: 2026-11-14
+
 ## 1. Executive Summary
 
-**AutoBrowser** is a Windows desktop application that acts as an intelligent URL router, automatically directing web links to user-configured browsers based on customizable regex rules. It solves the problem of users who want different browsers for different types of URLs (e.g., Chrome for Google apps, Firefox for development, Edge for general browsing) without manually copying and pasting URLs.
+### Problem Statement
 
-**Target Users:**
-- Power users who use multiple browsers for different tasks
-- Developers who need specific browsers for testing
-- Users who want to separate work and personal browsing
+Users who work across multiple browsers (e.g., Chrome for work, Firefox for dev, Edge for personal) must manually copy-paste URLs between browsers, and Windows offers no way to route links by destination automatically.
 
-**Key Value Proposition:**
-- Set-and-forget URL routing rules
-- Seamless integration with Windows as a protocol handler
-- Portable, no-installation-required design
+### Proposed Solution
+
+AutoBrowser is a portable Windows desktop application that intercepts URLs (via the `autobrowser://` protocol, default-browser registration, and Windows Search interception) and routes them to user-configured browsers based on ordered regex/substring rules, with a fallback browser for unmatched links. It lives in the system tray, self-updates atomically, and requires no installation or admin rights.
+
+### Success Criteria
+
+| # | KPI | Target | Measure |
+|---|---|---|---|
+| SC-1 | Rule match accuracy | ≥99% of configured patterns resolve to the intended browser | Rule-evaluation unit tests + manual Test URL validation |
+| SC-2 | Startup-to-ready time | <2s on Windows 10/11 cold start | Timed launch benchmark |
+| SC-3 | URL routing latency | <500ms from URL receipt to browser launch | End-to-end routing benchmark |
+| SC-4 | Update success rate | >95% without manual intervention | AutoUpdater success/failure log aggregation |
+| SC-5 | Memory footprint | <50MB typical steady state | Process working-set measurement |
 
 ---
 
-## 2. Product Goals & Success Metrics
+## 2. User Experience & Functionality
 
-### Goals
-1. **Primary**: Provide reliable, automatic URL routing to the correct browser based on user-defined rules
-2. **Secondary**: Be invisible and non-intrusive — run in system tray, minimal startup footprint
-3. **Tertiary**: Self-updating with minimal user intervention
+### User Personas
 
-### Success Metrics
-| Metric | Target |
+| Persona | Description | Key Needs |
+|---|---|---|
+| **Power User** | Uses multiple browsers for distinct tasks; wants set-and-forget routing | Ordered rules, per-rule toggle, Test URL |
+| **Developer** | Needs specific browsers/builds for testing | Custom browser paths, regex patterns, quick rule iteration |
+| **Work/Personal Splitter** | Separates work and personal browsing | Default-browser mode, silent routing, tray presence |
+| **Windows Search User** *(v1.1)* | Opens web results from Windows Search and expects them in the right browser | Windows Search interception, `microsoft-edge:` handling |
+
+### User Stories & Acceptance Criteria
+
+#### Core URL Routing
+
+**US-001 — Define pattern-to-browser rules**
+> As a user, I want to define rules that match URL patterns and open them in specific browsers.
+
+- [ ] AC: User can create a rule with Name, Pattern, and BrowserPath via the Rule Editor.
+- [ ] AC: Rules persist to `Data/rules.json` and survive restart.
+- [ ] AC: Invalid regex patterns are rejected at save time with an error message.
+
+**US-002 — Priority-ordered evaluation**
+> As a user, I want rules evaluated in a defined order so I can control which match wins.
+
+- [ ] AC: Rules are evaluated in `Sequence` ascending order (lower = first).
+- [ ] AC: First matching enabled rule wins; evaluation stops.
+- [ ] AC: Reordering rules (Move Up/Down) changes evaluation order and persists immediately.
+
+**US-003 — Rule groups**
+> As a user, I want to group rules into named categories for better organization.
+
+- [ ] AC: Rules can be assigned to a named group.
+- [ ] AC: Groups are collapsible/expandable in the Home tree view.
+- [ ] AC: Group membership does not change evaluation order unless group sequence does.
+
+**US-004 — Test URL before going live**
+> As a user, I want to test a URL against my rules before they take effect.
+
+- [ ] AC: Test URL dialog shows which rule matched (or fallback/no-match), and the target browser.
+- [ ] AC: Testing does not actually launch a browser.
+
+**US-005 — Enable/disable rules**
+> As a user, I want to enable or disable rules without deleting them.
+
+- [ ] AC: Disabled rules are skipped during evaluation.
+- [ ] AC: Rule state is visually indicated (enabled/disabled) in the tree.
+- [ ] AC: Toggle persists immediately (auto-save).
+
+**US-018 — Drop rule action** *(current build)*
+> As a user, I want a rule to drop (block) a URL so certain links never open.
+
+- [ ] AC: A rule can be marked as Drop; matched URLs are not launched in any browser.
+- [ ] AC: Routing result reports `Dropped` with the matching rule name.
+
+#### Browser Management
+
+**US-006 — Auto-detect installed browsers**
+> As a user, I want AutoBrowser to detect installed browsers automatically.
+
+- [ ] AC: Installed browsers are discovered at startup via the browser provider.
+- [ ] AC: Detected browsers appear with display name and executable path in browser selection.
+- [ ] AC: Unknown/newly installed browsers are picked up on next refresh without restart of the app where feasible.
+
+**US-007 — Fallback browser**
+> As a user, I want a fallback browser for URLs that match no rule.
+
+- [ ] AC: Unmatched URLs launch the configured fallback browser.
+- [ ] AC: If fallback path is missing/invalid, routing reports `NoMatch` and does not crash.
+
+**US-008 — Custom browser paths**
+> As a user, I want to add custom browser paths if detection misses one.
+
+- [ ] AC: User can browse to / type an arbitrary executable path.
+- [ ] AC: Invalid paths are surfaced at rule save or at launch time with fallback behavior.
+
+#### Windows Integration
+
+**US-009 — Default browser handler**
+> As a user, I want AutoBrowser to register as the default browser handler.
+
+- [ ] AC: Registers `AutoBrowserLink` ProgId (HKCU, no admin) and can be selected in Windows Settings > Default Apps.
+- [ ] AC: HTTP(S) links are routed through AutoBrowser, which then dispatches per rules.
+
+**US-010 — Custom protocol**
+> As a user, I want AutoBrowser to register the `autobrowser://` protocol.
+
+- [ ] AC: `autobrowser://` URIs open in AutoBrowser and are routed by rules.
+- [ ] AC: Protocol registration lives in HKCU only; no elevation required.
+
+**US-011 — Re-register prompt**
+> As a user, I want a re-register prompt if Windows registry entries are missing.
+
+- [ ] AC: If the app detects it moved (path change) or registrations are stale, it prompts to re-register.
+- [ ] AC: User can manually re-tick registration checkboxes in Settings to force re-registration.
+
+**US-019 — Windows Search interception** *(v1.1, current build)*
+> As a user, I want web results opened from Windows Search to route through my rules.
+
+- [ ] AC: Enabling "Intercept Windows Search" registers `AutoBrowser.microsoft-edge` ProgId (HKCU) and starts the reactive watcher.
+- [ ] AC: `microsoft-edge:?url=...` URIs are parsed (including `&timestamp=` and similar params) and routed.
+- [ ] AC: Disabling unregisters the ProgId and stops the watcher; state persists in settings.
+
+#### System Tray & UI
+
+**US-012 — System tray presence**
+> As a user, I want AutoBrowser to live in the system tray and not clutter my taskbar.
+
+- [ ] AC: App runs in tray; main window is hidden on startup unless opened.
+- [ ] AC: Tray context menu offers Show/Hide, Check for Updates, Exit.
+
+**US-013 — Minimize/close to tray**
+> As a user, I want minimize-to-tray and close-to-tray as independent options.
+
+- [ ] AC: Each behavior is independently configurable in Settings.
+- [ ] AC: With close-to-tray off, closing exits the app.
+
+**US-014 — Theme switching**
+> As a user, I want to switch between light and dark themes.
+
+- [ ] AC: Theme options: Light / Dark / System (default).
+- [ ] AC: Choice persists to `Data/settings.json`.
+
+#### Updates
+
+**US-015 — Startup update check**
+> As a user, I want AutoBrowser to check for updates automatically on startup.
+
+- [ ] AC: Checks GitHub Releases API (throttled to once per hour).
+- [ ] AC: If a newer version exists, a dialog offers to update; user can defer.
+
+**US-016 — One-click, incremental updates**
+> As a user, I want one-click updates that don't re-download the whole app unnecessarily.
+
+- [ ] AC: Update downloads the release ZIP, extracts to a temp workspace, and hands off to AutoUpdater.exe.
+
+**US-017 — Atomic updates**
+> As a user, I want the update to be atomic — if it fails, the old version is restored.
+
+- [ ] AC: Current version is backed up before swap; SHA256 verification gates the swap.
+- [ ] AC: On failure, backup is restored and the app relaunches on the old version.
+- [ ] AC: All update operations are logged.
+
+### Non-Goals
+
+The following are **explicitly out of scope** for the current PRD:
+
+- No telemetry, analytics, or data collection of any kind.
+- No cloud sync of rules or settings.
+- No plugin system or third-party rule matchers.
+- No browser profile / container support (Chrome profiles, Firefox containers) in v1.
+- No mobile, macOS, or Linux support.
+- No installer or MSI; distribution remains portable ZIP (framework-dependent and self-contained).
+- No scheduled/time-of-day routing in v1.
+- No multi-user or per-account rule sets.
+
+---
+
+## 3. AI System Requirements
+
+**Not applicable.** AutoBrowser's routing engine is deterministic rule evaluation (regex/substring + ordered matching). There is no ML, LLM, or heuristic inference in scope, and none is planned for the next two releases.
+
+### Where "intelligence" is simulated today
+
+- **Windows Search interception** (v1.1): purely rule-driven — a registered ProgId + reactive watcher + URL normalization in `UrlInterceptorService.StripProtocolPrefix` (handles `microsoft-edge:` variants). No learned behavior.
+- If a future version adds natural-language rule authoring or smart categorization, this section will be re-opened with its own evaluation strategy (e.g., NL→regex conversion accuracy on a 50-pattern benchmark).
+
+---
+
+## 4. Technical Specifications
+
+### Architecture Overview
+
+- **Form**: Single-process WPF desktop app (MVVM, CommunityToolkit.Mvvm) with an optional companion `AutoUpdater.exe` (AOT console) for atomic file swaps.
+- **Pattern**: Service-based modular layout (`Core` interfaces/services, `Features` (Home, RulesEditor, Settings, About, Shell), `Infrastructure` (Persistence, Windows)).
+- **DI**: Microsoft.Extensions.DependencyInjection registers services at startup.
+- **Data flow**:
+  1. URL arrives via `autobrowser://` protocol, default-browser association, or Windows Search interception (all land in `AutoBrowser.exe` with the URL as an argument).
+  2. Single-instance mutex: a second instance forwards the URL to the first via named pipe.
+  3. `UrlInterceptorService.TryRoute(url, fallbackPath)` normalizes the URL (strips protocol prefixes, decodes `microsoft-edge:` params, defaults to `https://`).
+  4. Enabled rules ordered by `Sequence` are matched first-match-wins; matched rules either launch the configured browser (via `IBrowserLauncher` strategy — generic + specialized launchers) or Drop the URL.
+  5. No match → fallback browser if a valid path is set, else `NoMatch`.
+  6. **Infinite-loop protection**: unmatched URLs are launched by direct EXE path, never via shell association back into AutoBrowser.
+
+### Integration Points
+
+| Integration | Detail |
 |---|---|
-| Rule match accuracy | >99% for configured patterns |
-| Startup time | <2 seconds to ready state |
-| Memory footprint | <50MB typical usage |
-| Update success rate | >95% without manual intervention |
+| **Registry (HKCU)** | `autobrowser` protocol; `AutoBrowserLink` default-browser ProgId; `AutoBrowser.microsoft-edge` Windows Search ProgId. All user-level, no admin. |
+| **GitHub Releases API** | Update checks (version comparison Major.Minor.Patch), release ZIP download. Throttled 1/hour. |
+| **Named pipe IPC** | Single-instance URL forwarding. |
+| **Windows Search** | Reactive watcher (`IWindowsSearchReactiveService`) + ProgId registration to catch `microsoft-edge:` links. |
+| **Filesystem** | `Data/rules.json`, `Data/settings.json` next to the EXE; portable. |
+| **Auth** | None — no accounts, no credentials. |
+
+### Security & Privacy
+
+- **No data collection or telemetry.** Only outbound network traffic is GitHub update checks/downloads.
+- All data is local (`Data/` folder); portable across machines.
+- Registry writes limited to HKCU (per-user, no elevation).
+- Update integrity: SHA256 verification before file swap; backup/restore on failure.
+- Logging (Serilog, console + file) never writes URLs' query-string secrets by default; URL values are logged at Info — **TBD**: consider redacting query params from logs.
 
 ---
 
-## 3. User Stories
+## 5. Risks & Roadmap
 
-### Core URL Routing
-| ID | Story | Priority |
+### Phased Rollout
+
+| Phase | Scope | Exit Criteria |
 |---|---|---|
-| US-001 | As a user, I want to define rules that match URL patterns and open them in specific browsers | P0 |
-| US-002 | As a user, I want rules evaluated by priority (lowest number first) so I can control match order | P0 |
-| US-003 | As a user, I want to group rules into named categories for better organization | P1 |
-| US-004 | As a user, I want to test a URL against my rules before they go live | P1 |
-| US-005 | As a user, I want to enable/disable rules without deleting them | P0 |
+| **MVP (current)** | Core routing (Sequence ordering, regex/substring, first-match-wins, fallback), Drop action, rule groups, auto-save, single instance, tray, protocol + default-browser registration, re-register prompt, atomic updates | All P0/P1 stories pass AC; routing latency <500ms; match accuracy ≥99% |
+| **v1.1 (in progress)** | Windows Search interception, hardening of URL normalization edge cases, error-path tests, performance benchmarks | Windows Search stories (US-019) pass AC; reliability metrics recorded |
+| **v1.2** | Rule import/export, URL pattern templates, browser profiles, time-of-day routing (stretch), telemetry **only if opted-in** (revisit SC-1 measurement) | Feature ACs pass; no regression on routing KPIs |
+| **v2.0** | Rule sharing, cloud sync (opt-in), plugin matchers, SQLite-backed storage if rule count grows beyond ~1000 | Scaled rule benchmarks pass (10k rules) |
 
-### Browser Management
-| ID | Story | Priority |
-|---|---|---|
-| US-006 | As a user, I want AutoBrowser to detect installed browsers automatically | P0 |
-| US-007 | As a user, I want to set a fallback browser for unmatched URLs | P0 |
-| US-008 | As a user, I want to add custom browser paths if detection misses one | P1 |
+### Technical Risks
 
-### Windows Integration
-| ID | Story | Priority |
-|---|---|---|
-| US-009 | As a user, I want AutoBrowser to register as the default browser handler | P0 |
-| US-010 | As a user, I want AutoBrowser to register the `autobrowser://` protocol | P0 |
-| US-011 | As a user, I want a re-register prompt if Windows registry entries are missing | P1 |
-
-### System Tray & UI
-| ID | Story | Priority |
-|---|---|---|
-| US-012 | As a user, I want AutoBrowser to live in the system tray and not clutter my taskbar | P0 |
-| US-013 | As a user, I want minimize-to-tray and close-to-tray as independent options | P1 |
-| US-014 | As a user, I want to switch between light and dark themes | P2 |
-
-### Updates
-| ID | Story | Priority |
-|---|---|---|
-| US-015 | As a user, I want AutoBrowser to check for updates automatically on startup | P1 |
-| US-016 | As a user, I want one-click updates that don't require re-downloading the entire app | P1 |
-| US-017 | As a user, I want the update process to be atomic — if it fails, the old version is restored | P0 |
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| **Edge cases in URL normalization** (exotic `microsoft-edge:` param orders, encoded URLs) misroute links | Medium | High (silent wrong-browser) | Centralize in `StripProtocolPrefix`, unit-test known Windows Search formats, add integration tests |
+| **Default-browser registration is reversible by Windows/other apps** | High | Medium | Re-register prompt (US-011); periodic registration health check |
+| **Update swap failure** leaves broken install | Low | High | Backup + SHA256 + restore path already implemented; test rollback explicitly |
+| **Registry writes blocked** by policy | Low | Medium | Log + continue without registration; manual re-tick in Settings |
+| **Rule count growth** (O(n) evaluation) | Low | Medium | Regex compilation + caching in v1.2; SQLite alternative |
+| **Self-contained build size** grows beyond portability targets | Low | Low | Single-file publish; monitor installed size (<10MB target) |
 
 ---
 
-## 4. Functional Requirements
-
-### 4.1 URL Routing Engine
-
-**FR-001: Rule Matching**
-- Rules are stored in `Data/rules.json`
-- Each rule has: Name, Pattern (regex/substring), BrowserPath, BrowserName, IsEnabled, Priority, Sequence
-- Rules are evaluated in Priority ASC order (lower number = higher priority)
-- First matching rule wins
-- If no rule matches, use fallback browser
-
-**FR-002: Pattern Matching**
-- Supports both substring and regex matching
-- Case-insensitive matching by default
-- Patterns are validated before saving (invalid regex is rejected)
-
-**FR-003: Browser Launch**
-- Browsers are launched with the URL as an argument
-- Uses `Process.Start()` with the browser's executable path
-- If browser path is invalid, falls back to system default
-
-### 4.2 Rule Management
-
-**FR-004: CRUD Operations**
-- Add new rules via RuleEditorView dialog
-- Edit existing rules inline or via dialog
-- Delete rules with confirmation
-- Reorder rules via Move Up/Move Down commands
-
-**FR-005: Rule Groups**
-- Rules can be organized into named groups
-- Groups can be collapsed/expanded in the UI
-- Groups have their own sequence ordering
-
-**FR-006: Auto-Save**
-- Rules are saved automatically when modified (no explicit save button)
-- Debounced saving to avoid excessive disk writes
-
-### 4.3 Windows Integration
-
-**FR-007: Protocol Registration**
-- Registers `autobrowser://` protocol in HKCU registry
-- No admin elevation required
-- Protocol handler points to AutoBrowser.exe with URL as argument
-
-**FR-008: Default Browser Registration**
-- Optional: Set as default browser via Windows Settings > Default Apps
-- Uses standard Windows default browser registration APIs
-- Reverts to previous default if uninstalled
-
-**FR-009: Single Instance**
-- Only one instance of AutoBrowser can run at a time
-- Uses named mutex for instance detection
-- Second instance sends URL to first instance via named pipe
-
-### 4.4 System Tray
-
-**FR-010: Tray Behavior**
-- Minimize to tray on close (configurable)
-- Minimize to tray on minimize (configurable)
-- Right-click context menu: Show/Hide, Check for Updates, Exit
-
-**FR-011: Theme Support**
-- Light and Dark theme options
-- Follows system theme by default
-- Persists user preference to `Data/settings.json`
-
-### 4.5 Auto-Update
-
-**FR-012: Update Check**
-- Checks GitHub releases API on startup
-- Compares versions (Major.Minor.Patch)
-- Shows dialog if newer version available
-
-**FR-013: Update Process**
-- Downloads ZIP from GitHub release
-- Extracts to temp workspace
-- Launches AutoUpdater.exe for file swap
-- AutoUpdater waits for main app exit (2 min timeout)
-- Swaps files with SHA256 verification
-- Relaunches main app
-
-**FR-014: Update Rollback**
-- Backs up current version before update
-- Restores backup if update fails
-- Logs all update operations for debugging
-
----
-
-## 5. Non-Functional Requirements
-
-### 5.1 Performance
-| Requirement | Target |
-|---|---|
-| Startup time | <2 seconds |
-| URL routing latency | <500ms |
-| Memory usage | <50MB typical |
-| Disk space | <10MB installed |
-
-### 5.2 Reliability
-| Requirement | Target |
-|---|---|
-| Uptime | 99.9% (excluding updates) |
-| Update success rate | >95% |
-| Rule match accuracy | >99% |
-
-### 5.3 Usability
-- No installation required (portable)
-- No admin privileges needed
-- Minimal configuration required (just set rules and forget)
-- Clear, non-technical UI
-
-### 5.4 Security
-- No data collection or telemetry
-- All data stored locally in `Data/` folder
-- Registry changes limited to HKCU (user-level)
-- No network requests except update checks and GitHub API
-
-### 5.5 Compatibility
-- Windows 10 (1809+)
-- Windows 11
-- .NET 10 runtime required
-
----
-
-## 6. UI/UX Requirements
-
-### 6.1 Main Window
-- NavigationView-based layout (WPF UI library)
-- Three pages: Home (Rules), Settings, About
-- Mica backdrop for modern Windows look
-- OS-native title bar (no custom title bar)
-
-### 6.2 Home Page (Rules)
-- Grouped tree view of rules
-- Add/Edit/Delete/Reorder actions
-- Test URL input dialog
-- Visual indicators for rule state (enabled/disabled)
-
-### 6.3 Settings Page
-- Theme toggle (Light/Dark/System)
-- Default browser selection
-- Tray behavior toggles (minimize-to-tray, close-to-tray)
-
-### 6.4 About Page
-- App version and credits
-- GitHub link for updates
-
----
-
-## 7. Technical Constraints
-
-### 7.1 Technology Stack
-- **Framework**: .NET 10 (WPF)
-- **UI Library**: WPF UI (Lepo.co)
-- **Language**: C# (latest)
-- **Pattern**: MVVM with CommunityToolkit.Mvvm
-- **DI**: Microsoft.Extensions.DependencyInjection
-- **Logging**: Serilog (Console + File)
-- **CLI**: System.CommandLine
-- **Testing**: xUnit + FlaUI (UI automation)
-
-### 7.2 Build & Deployment
-- Portable EXE (no installer)
-- Single-file publishing for AutoUpdater
-- MSBuild targets for post-build copy
-- NuGet package management (Central Package Management optional)
-
-### 7.3 Data Storage
-- JSON files in `Data/` folder next to EXE
-- No database required
-- Portable (can be moved between machines)
-
----
-
-## 8. Future Considerations
-
-### 8.1 Potential Enhancements
-- Rule import/export
-- Rule sharing between users
-- Browser profiles (not just executables)
-- Schedule-based routing (time of day)
-- URL pattern templates (common patterns)
-
-### 8.2 Scalability
-- Current design supports ~1000 rules without performance issues
-- Rule evaluation is O(n) where n = number of enabled rules
-- No known bottlenecks for typical usage
-
----
-
-## 9. Open Questions
-
-1. Should we support rule import/export in v1?
-2. Should we add telemetry for rule match success rates?
-3. Should we support browser profiles (e.g., Chrome profiles) in v1?
-
----
-
-## 10. Appendices
+## 6. Appendices
 
 ### Appendix A: Data Formats
 
-**Rule Format (rules.json)**
+**Rule (rules.json)** — fields: Name, UrlPattern, BrowserPath, BrowserName/BrowserDisplayName, IsEnabled, IsForward (Forward vs Drop), Priority, Sequence.
+
 ```json
 {
   "Name": "Google Apps",
-  "Pattern": "^https?://(mail|drive|docs|calendar|meet)\\.google\\.com",
+  "UrlPattern": "^https?://(mail|drive|docs|calendar|meet)\\.google\\.com",
   "BrowserPath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-  "BrowserName": "Chrome",
+  "BrowserDisplayName": "Chrome",
   "IsEnabled": true,
+  "IsForward": true,
   "Priority": 10,
   "Sequence": 1
 }
 ```
 
-**Settings Format (settings.json)**
+**Settings (settings.json)** — includes ThemeMode, MinimizeToTray, CloseToTray, LastUpdateCheckTime, and (v1.1) InterceptWindowsSearch.
+
 ```json
 {
   "ThemeMode": "Dark",
   "MinimizeToTray": true,
   "CloseToTray": true,
-  "LastUpdateCheckTime": "2026-07-25T10:00:00Z"
+  "LastUpdateCheckTime": "2026-07-25T10:00:00Z",
+  "InterceptWindowsSearch": false
 }
 ```
 
-### Appendix B: Registry Entries
+### Appendix B: Registry Entries (all HKCU)
 
-**Protocol Handler (HKCU)**
+**Protocol Handler**
 ```
 Software\Classes\autobrowser
   (Default) = "AutoBrowser:URL"
@@ -310,10 +294,31 @@ Software\Classes\autobrowser
     (Default) = "\"C:\Path\To\AutoBrowser.exe\" \"%1\""
 ```
 
-**Default Browser (HKCU)**
+**Default Browser**
 ```
 Software\Classes\AutoBrowserLink
   (Default) = "HTTP:AutoBrowser"
   shell\open\command
     (Default) = "\"C:\Path\To\AutoBrowser.exe\" \"%1\""
 ```
+
+**Windows Search Interception** *(v1.1)*
+```
+Software\Classes\AutoBrowser.microsoft-edge
+  (Default) = "URL:AutoBrowser Microsoft Edge Redirect"
+  "URL Protocol" = ""
+  shell\open\command
+    (Default) = "\"C:\Path\To\AutoBrowser.exe\" \"%1\""
+```
+
+### Appendix C: Compatibility & Constraints
+
+- Windows 10 (1809+) / Windows 11; .NET 10 runtime (framework-dependent) or self-contained.
+- Portable, no install, no admin; all state in `Data/`.
+- Tech stack: WPF + WPF UI (Lepo.co), CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection, Serilog, System.CommandLine (AutoUpdater), xUnit + FlaUI.
+
+### Open Questions
+
+1. Should URL query strings be redacted from Info-level logs (privacy hardening)?
+2. Should SC-1 match accuracy be measured by opt-in telemetry or purely by tests + Test URL usage?
+3. Does Windows Search interception belong behind a "beta" flag until v1.2?

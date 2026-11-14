@@ -23,6 +23,7 @@ public partial class App : Application
     private IRuleService _ruleService = null!;
     private IBrowserProvider _browserProvider = null!;
     private INotificationService _notificationService = null!;
+    private IWindowsSearchInterceptorService _windowsSearchInterceptorService = null!;
     private IEnumerable<IBrowserLauncher> _launchers = null!;
 
     private SingleInstanceService? _singleInstanceService;
@@ -44,7 +45,7 @@ public partial class App : Application
         Log.Debug("CLR: {CLR}", Environment.Version);
         Log.Debug("64-bit: {Is64Bit}", Environment.Is64BitProcess);
         Log.Debug("Path: {Path}", Environment.ProcessPath);
-        Log.Debug("Args: {Args}", string.Join(" ", e.Args));
+        Log.Debug("Startup Args: [{Args}]", string.Join(" | ", e.Args));
 
         var services = new ServiceCollection();
         services.AddSingleton<ISettingsRepository, JsonSettingsRepository>();
@@ -60,7 +61,10 @@ public partial class App : Application
         services.AddSingleton<IBrowserLauncher, FirefoxBrowserLauncher>();
         services.AddSingleton<IBrowserLauncher, GenericBrowserLauncher>();
         services.AddSingleton<INotificationService, NotificationService>();
+        services.AddSingleton<IWindowsSearchReactiveService, WindowsSearchReactiveService>();
+        services.AddSingleton<IWindowsSearchInterceptorService, WindowsSearchInterceptorService>();
         services.AddSingleton<UpdateService>(sp => new UpdateService());
+        services.AddSingleton(sp => (App)Current);
         services.AddTransient<MainViewModel>();
         services.AddTransient<HomeViewModel>();
         services.AddTransient<SettingsViewModel>();
@@ -79,12 +83,29 @@ public partial class App : Application
         _ruleService = Services.GetRequiredService<IRuleService>();
         _browserProvider = Services.GetRequiredService<IBrowserProvider>();
         _notificationService = Services.GetRequiredService<INotificationService>();
+        _windowsSearchInterceptorService = Services.GetRequiredService<IWindowsSearchInterceptorService>();
+        _windowsSearchInterceptorService.SyncWithSettings();
         _launchers = Services.GetServices<IBrowserLauncher>();
 
         base.OnStartup(e);
 
         // Parse command-line arguments once
         _parsedArgs = Commands.RouteCommand.Parse(e.Args);
+
+        if (e.Args.Length >= 1 && e.Args[0] == "--enable-interception")
+        {
+            var svc = Services.GetRequiredService<IWindowsSearchInterceptorService>();
+            var result = svc.EnableInterception();
+            Shutdown(result ? 0 : 1);
+            return;
+        }
+        if (e.Args.Length >= 1 && e.Args[0] == "--disable-interception")
+        {
+            var svc = Services.GetRequiredService<IWindowsSearchInterceptorService>();
+            var result = svc.DisableInterception();
+            Shutdown(result ? 0 : 1);
+            return;
+        }
 
         // Use parsed URL for early routing and later pipe signaling
         if (_parsedArgs.Url != null)
@@ -144,6 +165,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         Log.Information("OnExit (exit code: {ExitCode})", e.ApplicationExitCode);
+        (Services as IDisposable)?.Dispose();
         _singleInstanceService?.Dispose();
         _mutex?.Dispose();
         _trayIcon?.Dispose();
@@ -195,6 +217,5 @@ public partial class App : Application
             args.SetObserved();
         };
     }
-
 
 }

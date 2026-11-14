@@ -29,7 +29,7 @@
 
                 <!-- SECTION: Appearance -->
                 <ui:TextBlock Margin="0,0,0,8" FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Appearance"/>
-                <Border Padding="16,12" Margin="0,0,0,24" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                <Border Padding="16,12" Margin="0,0,0,24" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -47,7 +47,7 @@
                 <ui:TextBlock Margin="0,0,0,8" FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="System Integration"/>
                 <StackPanel Margin="0,0,0,24">
                     <!-- Default Browser -->
-                    <Border Padding="16,12" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Padding="16,12" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -62,7 +62,7 @@
                     </Border>
 
                     <!-- Protocol Handler -->
-                    <Border Padding="16,12" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Padding="16,12" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -75,11 +75,26 @@
                             <CheckBox Grid.Column="1" IsChecked="{Binding IsProtocolRegistered}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                         </Grid>
                     </Border>
+
+                    <!-- Windows Search Interception -->
+                    <Border Padding="16,12" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                                <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Intercept Windows Search Web Results"/>
+                                <ui:TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Intercepts MS Edge links launched by Windows Search." TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding InterceptWindowsSearch}" OffContent="Off" OnContent="On" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                        </Grid>
+                    </Border>
                 </StackPanel>
 
                 <!-- SECTION: Routing & Fallback -->
                 <ui:TextBlock Margin="0,0,0,8" FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Browser Routing"/>
-                <Border Padding="16,12" Margin="0,0,0,24" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                <Border Padding="16,12" Margin="0,0,0,24" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -100,7 +115,7 @@
                 <ui:TextBlock Margin="0,0,0,8" FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Window &amp; System Tray"/>
                 <StackPanel Margin="0,0,0,16">
                     <!-- Minimize to Tray -->
-                    <Border Padding="16,12" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Padding="16,12" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -115,7 +130,7 @@
                     </Border>
 
                     <!-- Close to Tray -->
-                    <Border Padding="16,12" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Padding="16,12" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -130,7 +145,7 @@
                     </Border>
 
                     <!-- Push Notifications -->
-                    <Border Padding="16,12" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Padding="16,12" Margin="0,0,0,8" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>

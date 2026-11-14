@@ -8,6 +8,7 @@ public class AppSettings
     public bool MinimizeToTray { get; set; } = true;
     public bool CloseToTray { get; set; } = true;
     public bool ShowPushNotifications { get; set; } = true;
+    public bool InterceptWindowsSearch { get; set; } = false;
     public double WindowWidth { get; set; } = 1040;
     public double WindowHeight { get; set; } = 730;
     public double WindowLeft { get; set; } = -1;

@@ -7,7 +7,7 @@ namespace AutoBrowser;
 
 public partial class App
 {
-    public void ProcessUrl(string url)
+    public RouteResult ProcessUrl(string url)
     {
         Log.Debug("ProcessUrl called: {Url}", url);
 
@@ -15,6 +15,7 @@ public partial class App
         var settings = _settingsService.LoadSettings();
         var fallbackPath = settings.FallbackBrowserPath;
         var result = interceptor.TryRoute(url, fallbackPath);
+
         if (result.Type == RouteResultType.Forwarded)
         {
             Log.Information("URL routed via {Browser}: {Url}", result.BrowserDisplayName, url);
@@ -23,7 +24,6 @@ public partial class App
                 var msg = string.IsNullOrEmpty(result.RuleName) ? $"Routed via {result.BrowserDisplayName}:\n{url}" : $"Routed via {result.BrowserDisplayName} ({result.RuleName}):\n{url}";
                 _notificationService.Show("AutoBrowser", msg);
             }
-            return;
         }
         else if (result.Type == RouteResultType.Dropped)
         {
@@ -33,14 +33,17 @@ public partial class App
                 var msg = string.IsNullOrEmpty(result.RuleName) ? $"URL dropped by matching rule:\n{url}" : $"URL dropped by matching rule ({result.RuleName}):\n{url}";
                 _notificationService.Show("AutoBrowser", msg);
             }
-            return;
+        }
+        else
+        {
+            Log.Warning("No rule matched for URL: {Url}", url);
+            if (settings.ShowPushNotifications)
+            {
+                _notificationService.Show("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
+            }
         }
 
-        Log.Warning("No rule matched for URL: {Url}", url);
-        if (settings.ShowPushNotifications)
-        {
-            _notificationService.Show("AutoBrowser", $"No rule matched and no fallback browser configured.\n{url}");
-        }
+        return result;
     }
 
     public void ActivateFromTray(string? url = null)
