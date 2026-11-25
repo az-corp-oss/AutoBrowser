@@ -147,7 +147,7 @@ Dialogs (shown as content dialogs)
 
 ### 4.1 Data Storage
 
-**Location:** `Data/` folder next to EXE (portable)
+**Location:** `Data/` folder next to EXE (portable, default) or `~/.config/autobrowser` (global). The mode is selected in Settings and persisted in `storage-mode.txt` beside the EXE; switching copies the data files to the destination folder.
 
 **Files:**
 | File | Format | Purpose |

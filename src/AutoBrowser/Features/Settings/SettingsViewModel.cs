@@ -1,6 +1,9 @@
+using System.Diagnostics;
+using System.IO;
 using AutoBrowser.Models;
 using AutoBrowser.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Serilog;
 using Wpf.Ui.Appearance;
 
@@ -11,15 +14,19 @@ public partial class SettingsViewModel(
     IDefaultBrowserService defaultBrowserService,
     ISettingsService settingsService,
     IBrowserProvider browserProvider,
-    IWindowsSearchInterceptorService windowsSearchInterceptorService) : ObservableObject
+    IWindowsSearchInterceptorService windowsSearchInterceptorService,
+    IDataLocationService dataLocationService) : ObservableObject
 {
     private readonly IProtocolService _protocolService = protocolService ?? throw new ArgumentNullException(nameof(protocolService));
     private readonly IDefaultBrowserService _defaultBrowserService = defaultBrowserService ?? throw new ArgumentNullException(nameof(defaultBrowserService));
     private readonly ISettingsService _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
     private readonly IBrowserProvider _browserProvider = browserProvider ?? throw new ArgumentNullException(nameof(browserProvider));
     private readonly IWindowsSearchInterceptorService _windowsSearchInterceptorService = windowsSearchInterceptorService ?? throw new ArgumentNullException(nameof(windowsSearchInterceptorService));
+    private readonly IDataLocationService _dataLocationService = dataLocationService ?? throw new ArgumentNullException(nameof(dataLocationService));
     private bool _isInitialized;
     private bool _isChangingInterceptWindowsSearch;
+    private bool _isChangingDataLocation;
+    private DateTime _lastDataLocationChange = DateTime.MinValue;
 
     public IReadOnlyList<BrowserDefinition> AvailableBrowsers => _browserProvider.GetInstalledBrowsers();
 
@@ -39,6 +46,11 @@ public partial class SettingsViewModel(
     private bool _showPushNotifications = true;
     [ObservableProperty]
     private bool _interceptWindowsSearch;
+
+    [ObservableProperty]
+    private bool _useGlobalData;
+
+    public string DataLocation => _dataLocationService.DataDir;
 
     [ObservableProperty]
     private string _status = "Ready";
@@ -100,6 +112,8 @@ public partial class SettingsViewModel(
         CloseToTray = settings.CloseToTray;
         ShowPushNotifications = settings.ShowPushNotifications;
         InterceptWindowsSearch = settings.InterceptWindowsSearch;
+        UseGlobalData = _dataLocationService.UseGlobalData;
+        OnPropertyChanged(nameof(DataLocation));
 
         CurrentApplicationTheme = ApplicationThemeManager.GetAppTheme();
         ApplicationThemeManager.Changed += OnThemeChanged;
@@ -123,6 +137,40 @@ public partial class SettingsViewModel(
         {
             CurrentApplicationTheme = currentApplicationTheme;
         }
+    }
+
+    partial void OnUseGlobalDataChanged(bool value)
+    {
+        if (!_isInitialized || _isChangingDataLocation) return;
+        if (_dataLocationService.UseGlobalData == value) return;
+        if (DateTime.UtcNow - _lastDataLocationChange < TimeSpan.FromMilliseconds(800)) return;
+
+        _lastDataLocationChange = DateTime.UtcNow;
+        _isChangingDataLocation = true;
+        try
+        {
+            _dataLocationService.SetUseGlobalData(value);
+            OnPropertyChanged(nameof(DataLocation));
+            Status = value ? "Data stored in ~/.config/autobrowser" : "Data stored beside the app";
+        }
+        finally
+        {
+            _isChangingDataLocation = false;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenDataLocation()
+    {
+        var path = _dataLocationService.DataDir;
+        Directory.CreateDirectory(path);
+        Log.Information("Opening data folder: {Path}", path);
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "explorer.exe",
+            Arguments = $"\"{path}\"",
+            UseShellExecute = true
+        });
     }
 
     partial void OnFallbackBrowserChanged(BrowserDefinition? value)

@@ -9,7 +9,7 @@ public class SettingsServiceTests
 
     public SettingsServiceTests()
     {
-        _sut = new SettingsService(new JsonSettingsRepository());
+        _sut = new SettingsService(new JsonSettingsRepository(new DataLocationService()));
     }
 
     [Fact]

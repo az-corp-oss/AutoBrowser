@@ -60,8 +60,10 @@ Serilog with structured logging using message templates.
 
 ## Data Paths
 
-| Type | Path |
-|---|---|
-| Rules | `Data/rules.json` |
-| Settings | `Data/settings.json` |
-| Default browser | `Data/default_browser.txt` |
+Portable mode (default) keeps data in `Data/` beside the EXE. Global mode keeps it in `~/.config/autobrowser`. The active mode is stored in `storage-mode.txt` beside the EXE, and switching modes copies the data files to the new location.
+
+| Type | Portable path | Global path |
+|---|---|---|
+| Rules | `Data/rules.json` | `~/.config/autobrowser/rules.json` |
+| Settings | `Data/settings.json` | `~/.config/autobrowser/settings.json` |
+| Default browser | `Data/default_browser.txt` | `~/.config/autobrowser/default_browser.txt` |

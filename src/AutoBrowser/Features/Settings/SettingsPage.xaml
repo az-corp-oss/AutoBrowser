@@ -92,6 +92,30 @@
                     </Border>
                 </StackPanel>
 
+                <!-- SECTION: Data Storage -->
+                <ui:TextBlock Margin="0,0,0,8" FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Data Storage"/>
+                <Border Padding="16,12" Margin="0,0,0,24" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <ui:TextBlock FontTypography="Body" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Global Data Location"/>
+                            <ui:TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Store rules and settings in ~/.config/autobrowser instead of beside the app. Switching copies the data to the new location." TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <ui:TextBlock MaxWidth="420" FontTypography="Caption" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding DataLocation}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                <ui:Button Margin="8,0,0,0" Padding="6,4" VerticalAlignment="Center"
+                                           Icon="{ui:SymbolIcon FolderOpen24}"
+                                           Command="{Binding OpenDataLocationCommand}"
+                                           AutomationProperties.Name="Open data folder"
+                                           ToolTip="Open data folder"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding UseGlobalData}" OffContent="Off" OnContent="On" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    </Grid>
+                </Border>
+
                 <!-- SECTION: Routing & Fallback -->
                 <ui:TextBlock Margin="0,0,0,8" FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Browser Routing"/>
                 <Border Padding="16,12" Margin="0,0,0,24" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">

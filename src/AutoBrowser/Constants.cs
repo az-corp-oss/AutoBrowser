@@ -11,5 +11,10 @@ public static class Constants
     public const string PipeName = "AutoBrowser-SingleInstancePipe";
     public const string ProgId = "AutoBrowserLink";
 
-    public static readonly string DataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
+    public static readonly string PortableDataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
+
+    public static readonly string GlobalDataDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "autobrowser");
+
+    public static readonly string StorageModeFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "storage-mode.txt");
 }

@@ -1,3 +1,4 @@
+using System.IO;
 using AutoBrowser.Models;
 using AutoBrowser.Services;
 using AutoBrowser.ViewModels;
@@ -12,6 +13,7 @@ public class SettingsViewModelTests
     private readonly Mock<ISettingsService> _mockSettingsService;
     private readonly Mock<IBrowserProvider> _mockBrowserProvider;
     private readonly Mock<IWindowsSearchInterceptorService> _mockWindowsSearchInterceptorService;
+    private readonly Mock<IDataLocationService> _mockDataLocationService;
 
     public SettingsViewModelTests()
     {
@@ -20,6 +22,8 @@ public class SettingsViewModelTests
         _mockSettingsService = new Mock<ISettingsService>();
         _mockBrowserProvider = new Mock<IBrowserProvider>();
         _mockWindowsSearchInterceptorService = new Mock<IWindowsSearchInterceptorService>();
+        _mockDataLocationService = new Mock<IDataLocationService>();
+        _mockDataLocationService.Setup(x => x.DataDir).Returns(Path.Combine(Path.GetTempPath(), "AutoBrowserTests"));
         _mockSettingsService.Setup(x => x.LoadSettings()).Returns(new AppSettings());
         _mockBrowserProvider.Setup(x => x.GetInstalledBrowsers()).Returns(new List<BrowserDefinition>());
     }
@@ -33,7 +37,8 @@ public class SettingsViewModelTests
             _mockDefaultBrowserService.Object,
             _mockSettingsService.Object,
             _mockBrowserProvider.Object,
-            _mockWindowsSearchInterceptorService.Object);
+            _mockWindowsSearchInterceptorService.Object,
+            _mockDataLocationService.Object);
 
         // Assert
         Assert.NotNull(vm.AvailableBrowsers);
@@ -51,7 +56,8 @@ public class SettingsViewModelTests
             _mockDefaultBrowserService.Object,
             _mockSettingsService.Object,
             _mockBrowserProvider.Object,
-            _mockWindowsSearchInterceptorService.Object);
+            _mockWindowsSearchInterceptorService.Object,
+            _mockDataLocationService.Object);
 
         Assert.True(vm.ShowPushNotifications);
 
@@ -70,7 +76,8 @@ public class SettingsViewModelTests
             _mockDefaultBrowserService.Object,
             _mockSettingsService.Object,
             _mockBrowserProvider.Object,
-            _mockWindowsSearchInterceptorService.Object);
+            _mockWindowsSearchInterceptorService.Object,
+            _mockDataLocationService.Object);
 
         vm.Initialize();
 

@@ -8,6 +8,10 @@ change memories (`AutoBrowser/changes/YYYY-MM/YYYY-MM-DD`).
 
 ## [2026-11-25]
 
+### Added
+
+- Data storage switch in Settings: portable mode keeps data in `Data/` beside the EXE, global mode uses `~/.config/autobrowser`. Switching copies `rules.json`, `settings.json`, and `default_browser.txt` to the destination, and a small button next to the path opens that folder in Explorer.
+
 ### Fixed
 
 - URLs whose last path segment is `AutoBrowser` were dropped at startup by `System.CommandLine`, so the app only came to the foreground and never routed the URL or used the fallback browser. `RouteCommand.Parse` now extracts the URL before parsing options; added `RouteCommandTests` covering both cases.

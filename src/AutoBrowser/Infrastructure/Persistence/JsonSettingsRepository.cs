@@ -7,7 +7,14 @@ namespace AutoBrowser.Services;
 
 public class JsonSettingsRepository : ISettingsRepository
 {
-    private static readonly string SettingsPath = Path.Combine(Constants.DataDir, "settings.json");
+    private readonly IDataLocationService _dataLocation;
+
+    public JsonSettingsRepository(IDataLocationService dataLocation)
+    {
+        _dataLocation = dataLocation ?? throw new ArgumentNullException(nameof(dataLocation));
+    }
+
+    private string SettingsPath => Path.Combine(_dataLocation.DataDir, "settings.json");
 
     public AppSettings Load()
     {
@@ -61,12 +68,13 @@ public class JsonSettingsRepository : ISettingsRepository
         await File.WriteAllTextAsync(SettingsPath, json, ct).ConfigureAwait(false);
     }
 
-    private static void EnsureDataDir()
+    private void EnsureDataDir()
     {
-        if (!Directory.Exists(Constants.DataDir))
+        var dir = _dataLocation.DataDir;
+        if (!Directory.Exists(dir))
         {
-            Log.Debug("Creating data directory: {Path}", Constants.DataDir);
-            Directory.CreateDirectory(Constants.DataDir);
+            Log.Debug("Creating data directory: {Path}", dir);
+            Directory.CreateDirectory(dir);
         }
     }
 }

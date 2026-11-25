@@ -8,7 +8,14 @@ namespace AutoBrowser.Services;
 
 public class JsonRuleRepository : IRuleRepository
 {
-    private static readonly string ConfigPath = Path.Combine(Constants.DataDir, "rules.json");
+    private readonly IDataLocationService _dataLocation;
+
+    public JsonRuleRepository(IDataLocationService dataLocation)
+    {
+        _dataLocation = dataLocation ?? throw new ArgumentNullException(nameof(dataLocation));
+    }
+
+    private string ConfigPath => Path.Combine(_dataLocation.DataDir, "rules.json");
 
     public List<RuleGroup> LoadGroups()
     {
@@ -111,9 +118,10 @@ public class JsonRuleRepository : IRuleRepository
         await File.WriteAllTextAsync(ConfigPath, json, ct).ConfigureAwait(false);
     }
 
-    private static void EnsureDataDir()
+    private void EnsureDataDir()
     {
-        if (!Directory.Exists(Constants.DataDir))
-            Directory.CreateDirectory(Constants.DataDir);
+        var dir = _dataLocation.DataDir;
+        if (!Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
     }
 }

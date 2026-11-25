@@ -9,7 +9,13 @@ public class DefaultBrowserService : IDefaultBrowserService
     private const string AppName = Constants.AppName;
     private const string ProgId = Constants.ProgId;
 
-    private static readonly string DefaultBrowserPath = Path.Combine(Constants.DataDir, "default_browser.txt");
+    private readonly IDataLocationService _dataLocation;
+    private string DefaultBrowserPath => Path.Combine(_dataLocation.DataDir, "default_browser.txt");
+
+    public DefaultBrowserService(IDataLocationService dataLocation)
+    {
+        _dataLocation = dataLocation ?? throw new ArgumentNullException(nameof(dataLocation));
+    }
 
     public bool RegisterAsDefaultBrowser()
     {
@@ -195,9 +201,10 @@ public class DefaultBrowserService : IDefaultBrowserService
         return firstSpace > 0 ? commandLine[..firstSpace] : commandLine;
     }
 
-    private static void EnsureDataDir()
+    private void EnsureDataDir()
     {
-        if (!Directory.Exists(Constants.DataDir))
-            Directory.CreateDirectory(Constants.DataDir);
+        var dir = _dataLocation.DataDir;
+        if (!Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
     }
 }

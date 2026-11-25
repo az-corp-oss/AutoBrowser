@@ -48,6 +48,7 @@ public partial class App : Application
         Log.Debug("Startup Args: [{Args}]", string.Join(" | ", e.Args));
 
         var services = new ServiceCollection();
+        services.AddSingleton<IDataLocationService, DataLocationService>();
         services.AddSingleton<ISettingsRepository, JsonSettingsRepository>();
         services.AddSingleton<IRuleRepository, JsonRuleRepository>();
         services.AddSingleton<IDefaultRulesFactory, DefaultRulesFactory>();
