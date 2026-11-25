@@ -14,24 +14,25 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- Sticky Header -->
-        <StackPanel Grid.Row="0" Margin="24,24,24,0">
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="24,24,24,0">
             <ui:TextBlock FontTypography="Title" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="Routing Rules"/>
             <ui:TextBlock Margin="0,4,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Manage browser routing rules for incoming URLs"/>
         </StackPanel>
 
-        <!-- Scrollable Content -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
-            <DockPanel Margin="24,16,24,80" LastChildFill="True">
-                <!-- Toolbar -->
-                <views:ToolbarView DockPanel.Dock="Top" Margin="0,0,0,12"/>
+        <views:GroupSidebarView Grid.Row="1" Grid.RowSpan="2" Grid.Column="0" Margin="24,16,12,24"/>
 
-                <!-- Rule List -->
-                <views:RulesListView Margin="0,0,0,8"/>
-            </DockPanel>
+        <views:ToolbarView Grid.Row="1" Grid.Column="1" Margin="0,16,24,12"/>
+
+        <ScrollViewer Grid.Row="2" Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent" Margin="0,0,24,24">
+            <views:RulesListView/>
         </ScrollViewer>
     </Grid>
 </Page>

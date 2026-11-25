@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 adheres to date-based entries (newest first). Entries were migrated from the former Serena daily
 change memories (`AutoBrowser/changes/YYYY-MM/YYYY-MM-DD`).
 
+## [2026-11-25]
+
+### Fixed
+
+- URLs whose last path segment is `AutoBrowser` were dropped at startup by `System.CommandLine`, so the app only came to the foreground and never routed the URL or used the fallback browser. `RouteCommand.Parse` now extracts the URL before parsing options; added `RouteCommandTests` covering both cases.
+- URL scheme detection is shared in `UrlHelper` and now includes `microsoft-edge:`, so intercepted URLs passed as startup arguments are routed too.
+- F2 rename now targets the selected group instead of an arbitrary one, and group rename goes through `HomeViewModel`.
+- The empty-state visibility now updates when rules are added to or removed from the active group.
+
+### Changed
+
+- Replaced the accordion group headers in `RulesListView` with a left `GroupSidebarView` on the Home page. Selecting a group now shows only that group's rules; the sidebar uses a toggle for the group's enabled state alongside its name and sequence.
+- Added `HomeViewModel.ActiveGroup`, `VisibleRules`, and `HasVisibleRules` to drive the master/detail layout, plus an empty state for groups without rules.
+- Kept the toolbar outside the rules `ScrollViewer` so it stays fixed while the rule list scrolls.
+- Added inline group rename in the sidebar: double-click the group name or press F2, Enter saves and Escape cancels.
+
 ## [2026-11-14]
 
 ### Added

@@ -3,32 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:models="clr-namespace:AutoBrowser.Models"
-             xmlns:local="clr-namespace:AutoBrowser.Views">
+             xmlns:converters="clr-namespace:AutoBrowser.Converters">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-        <local:EqualityToBooleanConverter x:Key="EqualityConverter" />
-        <local:BoolToRotationConverter x:Key="BoolToRotationConverter" />
-
-        <Style x:Key="GroupBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="Margin" Value="0,4,0,0"/>
-            <Style.Triggers>
-                <DataTrigger Value="True">
-                    <DataTrigger.Binding>
-                        <MultiBinding Converter="{StaticResource EqualityConverter}">
-                            <Binding />
-                            <Binding Path="DataContext.SelectedItem" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                        </MultiBinding>
-                    </DataTrigger.Binding>
-                    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}"/>
-                    <Setter Property="BorderThickness" Value="1.5"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
+        <converters:EqualityToBooleanConverter x:Key="EqualityConverter" />
 
         <Style x:Key="RuleBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
@@ -51,90 +29,57 @@
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
-    
+
     <Grid>
-        <ItemsControl ItemsSource="{Binding Groups}" AutomationProperties.AutomationId="RuleTreeView">
+        <ItemsControl ItemsSource="{Binding VisibleRules}" AutomationProperties.AutomationId="RuleTreeView">
             <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="{x:Type models:RuleGroup}">
-                    <StackPanel>
-                        <Border Style="{StaticResource GroupBorderStyle}"
-                                MouseLeftButtonDown="GroupBorder_MouseLeftButtonDown">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                <DataTemplate DataType="{x:Type models:RoutingRule}">
+                    <Border Style="{StaticResource RuleBorderStyle}"
+                            PreviewMouseLeftButtonDown="RuleBorder_PreviewMouseLeftButtonDown">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                                <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}"
-                                          VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}"
+                                      VerticalAlignment="Top" Margin="0,2,12,0"/>
 
-                                <StackPanel Grid.Column="1">
-                                    <StackPanel Orientation="Horizontal">
-                                        <ui:TextBlock FontTypography="Subtitle"
-                                                      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-                                                      Text="{Binding Name}"/>
-                                        <ui:TextBlock Margin="6,0,0,0" FontTypography="Caption"
-                                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                                      Text="{Binding Sequence, StringFormat='#{0}'}"/>
-                                    </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:TextBlock FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Name}" AutomationProperties.AutomationId="RuleNameText"/>
+                                    <ui:TextBlock Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text=" — "/>
+                                    <ui:TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding DisplayActionOrBrowser}"/>
+                                    <ui:TextBlock Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text=" — " Visibility="{Binding IsForward, Converter={StaticResource BoolToVis}}"/>
+                                    <ui:TextBlock MaxWidth="300" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding BrowserPath}" TextTrimming="CharacterEllipsis" Visibility="{Binding IsForward, Converter={StaticResource BoolToVis}}"/>
                                 </StackPanel>
-
-                                <ToggleButton Grid.Column="2" 
-                                              IsChecked="{Binding IsExpanded}"
-                                              Click="CollapseButton_Click"
-                                              Background="Transparent"
-                                              BorderThickness="0"
-                                              Padding="4"
-                                              VerticalAlignment="Center">
-                                    <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                                        <TextBlock.RenderTransform>
-                                            <RotateTransform Angle="{Binding IsExpanded, Converter={StaticResource BoolToRotationConverter}}" CenterX="6" CenterY="6"/>
-                                        </TextBlock.RenderTransform>
-                                    </TextBlock>
-                                </ToggleButton>
-                            </Grid>
-                        </Border>
-                        <ItemsControl ItemsSource="{Binding Rules}" Margin="24,4,24,8"
-                                     Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type models:RoutingRule}">
-                                    <Border Style="{StaticResource RuleBorderStyle}"
-                                            PreviewMouseLeftButtonDown="RuleBorder_PreviewMouseLeftButtonDown">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}"
-                                                      VerticalAlignment="Top" Margin="0,2,12,0"/>
-
-                                            <StackPanel Grid.Column="1">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <ui:TextBlock FontTypography="BodyStrong" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Name}" AutomationProperties.AutomationId="RuleNameText"/>
-                                                    <ui:TextBlock Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text=" — "/>
-                                                    <ui:TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding DisplayActionOrBrowser}"/>
-                                                    <ui:TextBlock Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text=" — " Visibility="{Binding IsForward, Converter={StaticResource BoolToVis}}"/>
-                                                    <ui:TextBlock MaxWidth="300" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding BrowserPath}" TextTrimming="CharacterEllipsis" Visibility="{Binding IsForward, Converter={StaticResource BoolToVis}}"/>
-                                                </StackPanel>
-                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                    <Border Background="{DynamicResource ControlFillColorDefaultBrush}"
-                                                            CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
-                                                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Sequence, StringFormat='#{0}'}"/>
-                                                    </Border>
-                                                    <ui:TextBlock FontFamily="Consolas" FontTypography="Body" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding UrlPattern}" TextTrimming="CharacterEllipsis"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Grid>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <Border Background="{DynamicResource ControlFillColorDefaultBrush}"
+                                            CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                        <ui:TextBlock FontTypography="Caption" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Sequence, StringFormat='#{0}'}"/>
                                     </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
+                                    <ui:TextBlock FontFamily="Consolas" FontTypography="Body" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding UrlPattern}" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
+
+        <ui:TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,32,0,0"
+                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                      Text="No rules in this group. Select Add to create one.">
+            <ui:TextBlock.Style>
+                <Style TargetType="ui:TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasVisibleRules}" Value="False">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ui:TextBlock.Style>
+        </ui:TextBlock>
     </Grid>
 </UserControl>

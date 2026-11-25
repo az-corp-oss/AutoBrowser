@@ -28,6 +28,46 @@ public partial class HomeViewModel : ObservableObject
     public ObservableCollection<RoutingRule> Rules { get; } = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(VisibleRules))]
+    [NotifyPropertyChangedFor(nameof(HasVisibleRules))]
+    private RuleGroup? _activeGroup;
+
+    private ObservableCollection<RoutingRule>? _activeGroupRules;
+
+    public IEnumerable<RoutingRule> VisibleRules => ActiveGroup?.Rules ?? [];
+    public bool HasVisibleRules => ActiveGroup?.Rules.Count > 0;
+
+    partial void OnActiveGroupChanged(RuleGroup? value)
+    {
+        if (_activeGroupRules is not null)
+        {
+            _activeGroupRules.CollectionChanged -= ActiveGroupRules_CollectionChanged;
+        }
+
+        _activeGroupRules = value?.Rules;
+        if (_activeGroupRules is not null)
+        {
+            _activeGroupRules.CollectionChanged += ActiveGroupRules_CollectionChanged;
+        }
+    }
+
+    private void ActiveGroupRules_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(HasVisibleRules));
+    }
+
+    private void EnsureActiveGroup()
+    {
+        if (ActiveGroup is not null) return;
+
+        var group = Groups.FirstOrDefault();
+        if (group is not null)
+        {
+            ActiveGroup = group;
+        }
+    }
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedRule))]
     [NotifyPropertyChangedFor(nameof(HasSelectedGroup))]
     [NotifyPropertyChangedFor(nameof(SelectedRule))]
@@ -100,6 +140,8 @@ public partial class HomeViewModel : ObservableObject
         {
             rule.PropertyChanged += Rule_PropertyChanged;
         }
+
+        EnsureActiveGroup();
     }
 
     private void Groups_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -117,6 +159,11 @@ public partial class HomeViewModel : ObservableObject
                     if (SelectedItem == group)
                     {
                         SelectedItem = null;
+                    }
+                    if (ActiveGroup == group)
+                    {
+                        ActiveGroup = null;
+                        EnsureActiveGroup();
                     }
                     foreach (var rule in group.Rules)
                     {
@@ -143,6 +190,8 @@ public partial class HomeViewModel : ObservableObject
                         _ruleGroupMap[rule] = group;
                     }
                 }
+
+                EnsureActiveGroup();
             }
         }
         finally
@@ -340,13 +389,23 @@ public partial class HomeViewModel : ObservableObject
         }
     }
 
+    public void RenameGroup(RuleGroup group, string name)
+    {
+        if (group is null) return;
+
+        var trimmed = name.Trim();
+        if (trimmed.Length == 0 || string.Equals(group.Name, trimmed, StringComparison.Ordinal)) return;
+
+        group.Name = trimmed;
+    }
+
     [RelayCommand]
     private void AddRule()
     {
         var rule = _dialogService.ShowAddRuleDialog();
         if (rule != null)
         {
-            var targetGroup = SelectedGroup ?? Groups.FirstOrDefault();
+            var targetGroup = ActiveGroup ?? SelectedGroup ?? Groups.FirstOrDefault();
             if (targetGroup == null)
             {
                 targetGroup = new RuleGroup
@@ -359,6 +418,7 @@ public partial class HomeViewModel : ObservableObject
                 Groups.Add(targetGroup);
             }
 
+            ActiveGroup = targetGroup;
             _isSyncing = true;
             try
             {
