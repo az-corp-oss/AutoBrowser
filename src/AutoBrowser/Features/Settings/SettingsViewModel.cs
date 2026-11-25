@@ -15,7 +15,8 @@ public partial class SettingsViewModel(
     ISettingsService settingsService,
     IBrowserProvider browserProvider,
     IWindowsSearchInterceptorService windowsSearchInterceptorService,
-    IDataLocationService dataLocationService) : ObservableObject
+    IDataLocationService dataLocationService,
+    IDataConflictDialogService dataConflictDialogService) : ObservableObject
 {
     private readonly IProtocolService _protocolService = protocolService ?? throw new ArgumentNullException(nameof(protocolService));
     private readonly IDefaultBrowserService _defaultBrowserService = defaultBrowserService ?? throw new ArgumentNullException(nameof(defaultBrowserService));
@@ -23,6 +24,7 @@ public partial class SettingsViewModel(
     private readonly IBrowserProvider _browserProvider = browserProvider ?? throw new ArgumentNullException(nameof(browserProvider));
     private readonly IWindowsSearchInterceptorService _windowsSearchInterceptorService = windowsSearchInterceptorService ?? throw new ArgumentNullException(nameof(windowsSearchInterceptorService));
     private readonly IDataLocationService _dataLocationService = dataLocationService ?? throw new ArgumentNullException(nameof(dataLocationService));
+    private readonly IDataConflictDialogService _dataConflictDialogService = dataConflictDialogService ?? throw new ArgumentNullException(nameof(dataConflictDialogService));
     private bool _isInitialized;
     private bool _isChangingInterceptWindowsSearch;
     private bool _isChangingDataLocation;
@@ -149,7 +151,22 @@ public partial class SettingsViewModel(
         _isChangingDataLocation = true;
         try
         {
-            _dataLocationService.SetUseGlobalData(value);
+            var conflicts = _dataLocationService.GetConflicts(value);
+            IReadOnlyList<DataConflict>? resolutions = null;
+            if (conflicts.Count > 0)
+            {
+                var targetName = value ? "global" : "portable";
+                var sourceName = value ? "portable" : "global";
+                resolutions = _dataConflictDialogService.Show(conflicts, targetName, sourceName);
+                if (resolutions is null)
+                {
+                    UseGlobalData = !value;
+                    Status = "Data location change cancelled";
+                    return;
+                }
+            }
+
+            _dataLocationService.SetUseGlobalData(value, resolutions);
             OnPropertyChanged(nameof(DataLocation));
             Status = value ? "Data stored in ~/.config/autobrowser" : "Data stored beside the app";
         }

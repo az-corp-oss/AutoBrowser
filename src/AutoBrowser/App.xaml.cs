@@ -57,6 +57,7 @@ public partial class App : Application
         services.AddSingleton<IDefaultBrowserService, DefaultBrowserService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<IDataConflictDialogService, DataConflictDialogService>();
         services.AddSingleton<IBrowserProvider, WindowsBrowserProvider>();
         services.AddSingleton<IBrowserLauncher, EdgeBrowserLauncher>();
         services.AddSingleton<IBrowserLauncher, FirefoxBrowserLauncher>();

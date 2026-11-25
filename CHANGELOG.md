@@ -18,6 +18,7 @@ change memories (`AutoBrowser/changes/YYYY-MM/YYYY-MM-DD`).
 - URL scheme detection is shared in `UrlHelper` and now includes `microsoft-edge:`, so intercepted URLs passed as startup arguments are routed too.
 - F2 rename now targets the selected group instead of an arbitrary one, and group rename goes through `HomeViewModel`.
 - The empty-state visibility now updates when rules are added to or removed from the active group.
+- Switching data storage modes now shows a conflict dialog when a file exists in both locations with different content: choose Keep global or Keep portable per file, with Merge rules available for `rules.json`. Existing destination files are backed up before any copy or merge.
 
 ### Changed
 

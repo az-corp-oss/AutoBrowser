@@ -14,6 +14,7 @@ public class SettingsViewModelTests
     private readonly Mock<IBrowserProvider> _mockBrowserProvider;
     private readonly Mock<IWindowsSearchInterceptorService> _mockWindowsSearchInterceptorService;
     private readonly Mock<IDataLocationService> _mockDataLocationService;
+    private readonly Mock<IDataConflictDialogService> _mockDataConflictDialogService;
 
     public SettingsViewModelTests()
     {
@@ -24,6 +25,8 @@ public class SettingsViewModelTests
         _mockWindowsSearchInterceptorService = new Mock<IWindowsSearchInterceptorService>();
         _mockDataLocationService = new Mock<IDataLocationService>();
         _mockDataLocationService.Setup(x => x.DataDir).Returns(Path.Combine(Path.GetTempPath(), "AutoBrowserTests"));
+        _mockDataLocationService.Setup(x => x.GetConflicts(It.IsAny<bool>())).Returns([]);
+        _mockDataConflictDialogService = new Mock<IDataConflictDialogService>();
         _mockSettingsService.Setup(x => x.LoadSettings()).Returns(new AppSettings());
         _mockBrowserProvider.Setup(x => x.GetInstalledBrowsers()).Returns(new List<BrowserDefinition>());
     }
@@ -38,7 +41,8 @@ public class SettingsViewModelTests
             _mockSettingsService.Object,
             _mockBrowserProvider.Object,
             _mockWindowsSearchInterceptorService.Object,
-            _mockDataLocationService.Object);
+            _mockDataLocationService.Object,
+            _mockDataConflictDialogService.Object);
 
         // Assert
         Assert.NotNull(vm.AvailableBrowsers);
@@ -57,7 +61,8 @@ public class SettingsViewModelTests
             _mockSettingsService.Object,
             _mockBrowserProvider.Object,
             _mockWindowsSearchInterceptorService.Object,
-            _mockDataLocationService.Object);
+            _mockDataLocationService.Object,
+            _mockDataConflictDialogService.Object);
 
         Assert.True(vm.ShowPushNotifications);
 
@@ -77,7 +82,8 @@ public class SettingsViewModelTests
             _mockSettingsService.Object,
             _mockBrowserProvider.Object,
             _mockWindowsSearchInterceptorService.Object,
-            _mockDataLocationService.Object);
+            _mockDataLocationService.Object,
+            _mockDataConflictDialogService.Object);
 
         vm.Initialize();
 
