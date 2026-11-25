@@ -62,12 +62,6 @@ public partial class App
         Log.Debug("ActivateFromTray complete");
     }
 
-    private static bool IsUrl(string? value) =>
-        value is not null
-        && (value.StartsWith("autobrowser:", StringComparison.OrdinalIgnoreCase)
-            || value.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
-
     private bool TryRouteUrl(string url)
     {
         Log.Information("Routing URL via UrlInterceptorService");
