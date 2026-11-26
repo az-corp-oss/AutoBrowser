@@ -32,6 +32,18 @@ public class UpdateServiceTests
     }
 
     [Fact]
+    public void BuildUpdaterArguments_UsesOnlySupportedOptions()
+    {
+        var args = UpdateService.BuildUpdaterArguments(1234, "extract", "app");
+
+        Assert.Contains("--pid 1234", args);
+        Assert.Contains("--source", args);
+        Assert.Contains("--exe", args);
+        Assert.DoesNotContain("--target", args);
+        Assert.DoesNotContain("--workspace", args);
+    }
+
+    [Fact]
     public async Task CheckForUpdateAsync_404_ReturnsNull()
     {
         var handler = new MockHttpMessageHandler(async (req, ct) =>

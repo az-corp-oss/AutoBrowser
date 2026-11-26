@@ -19,12 +19,16 @@ internal static class Program
         var pidOption = new Option<int>("--pid", "Process ID of the app to wait for") { IsRequired = true };
         var sourceOption = new Option<string>("--source", "Path to update workspace directory") { IsRequired = true };
         var exeOption = new Option<string>("--exe", "Path to app executable") { IsRequired = true };
+        var targetOption = new Option<string>("--target", "Target app directory (legacy, ignored)");
+        var workspaceOption = new Option<string>("--workspace", "Update workspace (legacy, ignored)");
 
         var rootCommand = new RootCommand("AutoUpdater - applies updates to AutoBrowser")
         {
             pidOption,
             sourceOption,
-            exeOption
+            exeOption,
+            targetOption,
+            workspaceOption
         };
 
         rootCommand.SetHandler(async (int appPid, string updateWorkspace, string appExePath) =>

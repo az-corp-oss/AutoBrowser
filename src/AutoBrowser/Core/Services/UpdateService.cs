@@ -128,16 +128,21 @@ public class UpdateService
 
         TryRemoveZoneIdentifier(Path.Combine(runnerRoot, "AutoUpdater.exe"));
 
+        var arguments = BuildUpdaterArguments(currentPid, extractPath, appDir);
+        Log.Information("Starting AutoUpdater with arguments: {Arguments}", arguments);
         var startInfo = new ProcessStartInfo
         {
             FileName = Path.Combine(runnerRoot, "AutoUpdater.exe"),
-            Arguments = $"--pid {currentPid} --source \"{extractPath}\" --target \"{appDir}\" --exe \"{Path.Combine(appDir, "AutoBrowser.exe")}\" --workspace \"{workspace}\"",
+            Arguments = arguments,
             UseShellExecute = true,
         };
 
         Process.Start(startInfo);
         Application.Current.Shutdown();
     }
+
+    internal static string BuildUpdaterArguments(int pid, string extractPath, string appDir) =>
+        $"--pid {pid} --source \"{extractPath}\" --exe \"{Path.Combine(appDir, "AutoBrowser.exe")}\"";
 
     private static AssetInfo? SelectAsset(List<AssetInfo> assets)
     {
