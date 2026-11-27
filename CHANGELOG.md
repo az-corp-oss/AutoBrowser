@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 adheres to date-based entries (newest first). Entries were migrated from the former Serena daily
 change memories (`AutoBrowser/changes/YYYY-MM/YYYY-MM-DD`).
 
+## [2026-11-26]
+
+### Changed
+
+- Pre-push now runs UI tests only when `.xaml` or `.xaml.cs` changed, while unit tests still run on every push. A failing UI test blocks the push.
+
 ## [2026-11-25]
 
 ### Added

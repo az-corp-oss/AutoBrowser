@@ -1,5 +1,15 @@
 {
   "$schema": "https://alirezanet.github.io/Husky.Net/schema.json",
+  "variables": [
+    {
+      "name": "changed-files",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "git rev-parse --verify @{upstream} >nul 2>&1 && git diff --name-only @{upstream}..HEAD || git ls-tree -r --name-only HEAD"
+      ]
+    }
+  ],
   "tasks": [
     {
       "name": "Run unit tests",
@@ -16,14 +26,31 @@
       "output": "always"
     },
     {
-      "name": "Run all tests",
+      "name": "Run unit tests (pre-push)",
       "group": "pre-push",
       "command": "dotnet",
       "args": [
         "test",
         "src/AutoBrowser.Tests/AutoBrowser.Tests.csproj",
+        "--settings",
+        "AutoBrowser.Tests.runsettings",
         "--verbosity",
         "quiet"
+      ],
+      "output": "always"
+    },
+    {
+      "name": "Run UI tests on XAML change",
+      "group": "pre-push",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "dotnet test src/AutoBrowser.Tests/AutoBrowser.Tests.csproj --filter FullyQualifiedName~UI --verbosity quiet && exit /b 0",
+        "${changed-files}"
+      ],
+      "include": [
+        "**/*.xaml",
+        "**/*.xaml.cs"
       ],
       "output": "always"
     }

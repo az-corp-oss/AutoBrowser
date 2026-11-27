@@ -34,11 +34,7 @@ Run UI tests explicitly (only when needed / before release):
 dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj --filter "FullyQualifiedName~UI"
 ```
 
-Run the full suite (pre-push / release validation):
-
-```bash
-dotnet test src\AutoBrowser.Tests\AutoBrowser.Tests.csproj
-```
+Automatic pre-push validation (Husky): unit tests always run with `AutoBrowser.Tests.runsettings`; UI tests run automatically only when a `*.xaml` or `*.xaml.cs` file changed in the pushed commits. A failing UI test blocks the push. The explicit UI-test command above remains available for manual runs.
 
 Test timeouts are configured in `AutoBrowser.Tests.runsettings`:
 - Per-test: 20s
